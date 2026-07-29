@@ -8,6 +8,7 @@ import MainLayout from "./components/layout/MainLayout";
 import ProtectedRoute from "./components/routes/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Permisos from "./components/forms/Mantenimiento/Permisos";
+import GestionClientes from "./components/forms/GestionClientes/GestionClientes";
 import Usuario from "./components/forms/Mantenimiento/Usuario";
 
 
@@ -103,6 +104,14 @@ export default function App() {
             element={
               <LayoutShell>
                 <Permisos />
+              </LayoutShell>
+            }
+          />
+          <Route
+            path="/clientes"
+            element={
+              <LayoutShell>
+                <GestionClientes />
               </LayoutShell>
             }
           />

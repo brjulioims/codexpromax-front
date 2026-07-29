@@ -5,6 +5,7 @@ import {
   ChevronDown,
   Menu,
   X,
+  UserRoundSearch,
 } from "lucide-react";
 import packageJson from "../../../package.json";
 
@@ -37,6 +38,13 @@ const SIDEBAR_ITEMS = [
         route: "/configuracion",
       }
     ],
+  },
+  {
+    code: "clientes",
+    icon: UserRoundSearch,
+    label: "G. Clientes",
+    activeMatch: ["/clientes"],
+    route: "/clientes",
   },
 ];
 
@@ -253,7 +261,7 @@ export default function Sidebar({
 
       {/* LINKS DE NAVEGACIÓN */}
       <nav className="flex-1 space-y-1 overflow-y-auto pt-5 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {SIDEBAR_ITEMS.filter((item) => canShow(item)).map((item, index) => (
+        {SIDEBAR_ITEMS.map((item, index) => (
           <SidebarItem
             key={item.code ?? `sidebar-${index}`}
             icon={item.icon}
@@ -263,9 +271,7 @@ export default function Sidebar({
             isExpanded={openSection === item.code}
             onToggleExpand={() => handleToggleSection(item.code)}
             onClick={item.route ? () => handleNavigate(item.route) : undefined}
-            childrenItems={(item.childrenItems ?? [])
-              .filter((child) => isChildVisible(item, child))
-              .map((child) => ({
+            childrenItems={(item.childrenItems ?? []).map((child) => ({
                 label: child.label,
                 active: child.activeMatch.includes(activePath),
                 onClick: () => handleNavigate(child.route),

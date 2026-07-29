@@ -7,10 +7,7 @@ const ENABLED_PERMISSIONS_STORAGE_KEY = "enabledPermissionCodes";
 const ENABLED_PERMISSION_IDS_STORAGE_KEY = "enabledPermissionIds";
 const PERMISSION_IDS_BY_CODE_STORAGE_KEY = "permissionIdsByCode";
 
-const ROUTE_PERMISSION_RULES = [
-  { permission: "dashboard", paths: ["/dashboard"] },
-  { permission: "mantenimiento", paths: ["/usuarios"] },
-];
+const ROUTE_PERMISSION_RULES = [];
 
 function normalizePermissionCode(value) {
   return `${value ?? ""}`.trim().toLowerCase();
@@ -56,6 +53,7 @@ function canAccessPath(enabledCodes, pathname) {
 
   if (!requiredPermission) return true;
   if (!(enabledCodes instanceof Set)) return false;
+  if (requiredPermission === "dashboard" && enabledCodes.size === 0) return true;
 
   return enabledCodes.has(requiredPermission);
 }
