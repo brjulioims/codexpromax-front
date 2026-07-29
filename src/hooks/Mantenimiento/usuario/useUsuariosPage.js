@@ -3,6 +3,7 @@ import { useUsuariosQuery } from "../../queries/useUsuariosQuery";
 import { useRolesQuery } from "../../queries/useRolesQuery";
 import {
   useCreateUsuarioMutation,
+  useUpdateUsuarioEstadoMutation,
   useUpdateUsuarioMutation,
   useUpdateUsuarioPasswordMutation,
 } from "../../mutations/useUsuariosMutations";
@@ -90,6 +91,7 @@ export function useUsuariosPage() {
       setDraftUser(null);
     },
   });
+  const updateStatusMutation = useUpdateUsuarioEstadoMutation();
 
   const updatePasswordMutation = useUpdateUsuarioPasswordMutation({
     onSuccess: () => {
@@ -125,7 +127,6 @@ export function useUsuariosPage() {
       email: draftUser.email,
       username: draftUser.username,
       rol_id: selectedRoleObj ? selectedRoleObj.id : null,
-      estatus: draftUser.status === "Activo" ? 1 : 0,
     };
 
     await updateMutation.mutateAsync({
@@ -168,19 +169,11 @@ export function useUsuariosPage() {
     if (!confirm.isConfirmed) return;
 
     try {
-      const selectedRoleObj = rawRoles.find((r) => r.nombre === user.role);
-
-      const payload = {
-        nombre: user.name,
-        email: user.email,
-        username: user.username,
-        rol_id: selectedRoleObj ? selectedRoleObj.id : null,
-        estatus: isCurrentlyActive ? 0 : 1,
-      };
-
-      await updateMutation.mutateAsync({
+      await updateStatusMutation.mutateAsync({
         id: user.id,
-        payload,
+        payload: {
+          activo: !isCurrentlyActive,
+        },
       });
 
       await Swal.fire({

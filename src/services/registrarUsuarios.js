@@ -1,27 +1,54 @@
-function getStoredUsers() {
-  const users = localStorage.getItem("mock_users");
-  if (!users) return [];
-  try {
-    return JSON.parse(users);
-  } catch {
-    return [];
-  }
-}
+const REGISTRAR_USUARIOS_API_URL = "/api/register";
 
-function saveStoredUsers(users) {
-  localStorage.setItem("mock_users", JSON.stringify(users));
+function buildHeaders(includeJson = false) {
+  const token = localStorage.getItem("token");
+  return {
+    accept: "*/*",
+    "ngrok-skip-browser-warning": "true",
+    Authorization: token ? `Bearer ${token}` : "",
+    ...(includeJson ? { "Content-Type": "application/json" } : {}),
+  };
 }
 
 function normalizeUsuario(usuario) {
-  const id = usuario?.id;
-  const email = usuario?.email?.trim?.() ?? "";
-  const username = usuario?.username?.trim?.() ?? "";
-  const nombre = usuario?.nombre?.trim?.() ?? username ?? email ?? "";
-  const rolId = usuario?.rol_id ?? null;
-  const rolNombre = usuario?.rol_nombre?.trim?.() ?? "";
-  const estatus = Number(usuario?.estatus ?? 0);
+  const id = Number(
+    usuario?.id ??
+      usuario?.usuario_id ??
+      usuario?.user_id ??
+      usuario?.idUsuario ??
+      usuario?.usuarioId ??
+      null
+  );
+  const email = `${usuario?.email ?? usuario?.correo ?? ""}`.trim();
+  const username = `${
+    usuario?.username ??
+    usuario?.usuario ??
+    usuario?.user_name ??
+    usuario?.nombre_usuario ??
+    email.split("@")[0] ??
+    ""
+  }`.trim();
+  const nombre = `${usuario?.nombre ?? usuario?.name ?? username ?? email}`.trim();
+  const rolId =
+    usuario?.rol_id ??
+    usuario?.role_id ??
+    usuario?.id_rol ??
+    usuario?.rolId ??
+    usuario?.roleId ??
+    null;
+  const rolNombre = `${
+    usuario?.rol_nombre ??
+    usuario?.role ??
+    usuario?.rol?.nombre ??
+    usuario?.rol ??
+    ""
+  }`.trim();
+  const estatus =
+    usuario?.activo != null
+      ? Number(usuario.activo)
+      : Number(usuario?.estatus ?? usuario?.estado ?? 0);
 
-  if (id == null || !nombre) return null;
+  if (!Number.isFinite(id) || !nombre) return null;
 
   return {
     id,
@@ -29,40 +56,61 @@ function normalizeUsuario(usuario) {
     email,
     username,
     estatus,
-    createdAt: usuario?.created_at ?? "",
-    rolId,
+    createdAt: usuario?.created_at ?? usuario?.createdAt ?? "",
+    rolId: rolId == null ? null : Number(rolId),
     rolNombre,
     status: estatus === 1 ? "Activo" : "Inactivo",
     role: rolNombre,
   };
 }
 
-export async function createUsuario(payload) {
-  console.log("[MOCK] Creating user offline:", payload);
-  const users = getStoredUsers();
-  
-  const roleNameMap = {
-    1: "ADMINISTRADOR",
-    2: "SUPERVISOR",
-    3: "USUARIO"
-  };
+async function parseResponse(response) {
+  if (!response.ok) {
+    let detail = "";
 
-  const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
-  const newUser = {
-    id: newId,
-    nombre: payload.nombre,
-    email: payload.email,
-    username: payload.username,
-    estatus: payload.estatus !== undefined ? Number(payload.estatus) : 1,
-    created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
-    rol_id: payload.rol_id ? Number(payload.rol_id) : 3,
-    rol_nombre: payload.rol_id ? (roleNameMap[payload.rol_id] ?? "USUARIO") : "USUARIO",
-  };
+    try {
+      const contentType = response.headers.get("content-type") ?? "";
+      if (contentType.includes("application/json")) {
+        const errorData = await response.json();
+        detail =
+          errorData?.message ??
+          errorData?.error ??
+          errorData?.detail ??
+          JSON.stringify(errorData);
+      } else {
+        detail = await response.text();
+      }
+    } catch {
+      detail = "";
+    }
 
-  users.push(newUser);
-  saveStoredUsers(users);
+    throw new Error(
+      `Error al registrar usuario: ${response.status}${detail ? ` - ${detail}` : ""}`
+    );
+  }
 
-  return normalizeUsuario(newUser);
+  if (response.status === 204) {
+    return null;
+  }
+
+  return response.json();
 }
 
-export const REGISTRAR_USUARIOS_API_URL = "/api/register";
+export async function createUsuario(payload) {
+  try {
+    const response = await fetch(REGISTRAR_USUARIOS_API_URL, {
+      method: "POST",
+      headers: buildHeaders(true),
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+
+    const data = await parseResponse(response);
+    return normalizeUsuario(data?.data ?? data);
+  } catch (error) {
+    console.error("Error registrando usuario", error);
+    throw error;
+  }
+}
+
+export { REGISTRAR_USUARIOS_API_URL };

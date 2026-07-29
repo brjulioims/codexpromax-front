@@ -1,7 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { createUsuario } from "../../services/registrarUsuarios";
-import { updateUsuario, updateUsuarioPassword } from "../../services/usuariosServices";
+import {
+  updateUsuario,
+  updateUsuarioEstado,
+  updateUsuarioPassword,
+} from "../../services/usuariosServices";
 import { queryKeys } from "../../utils/queryKeys";
 
 export function useCreateUsuarioMutation(options = {}) {
@@ -22,6 +26,19 @@ export function useUpdateUsuarioMutation(options = {}) {
 
   return useMutation({
     mutationFn: ({ id, payload }) => updateUsuario(id, payload),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.usuarios.all });
+      options.onSuccess?.(...args);
+    },
+    onError: (...args) => options.onError?.(...args),
+  });
+}
+
+export function useUpdateUsuarioEstadoMutation(options = {}) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload }) => updateUsuarioEstado(id, payload),
     onSuccess: (...args) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.usuarios.all });
       options.onSuccess?.(...args);
