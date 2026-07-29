@@ -49,7 +49,7 @@ async function loginUsuario({ identifier, password }) {
     method: "POST",
     headers: buildHeaders(true),
     body: JSON.stringify({
-      identifier,
+      identifier: identifier.trim(),
       password,
     }),
     credentials: "include",
@@ -67,6 +67,37 @@ async function loginUsuario({ identifier, password }) {
         "Credenciales invalidas";
     } catch {
       detail = "Credenciales invalidas";
+    }
+
+    throw new Error(detail);
+  }
+
+  return response.json();
+}
+
+async function getAuthenticatedUser(token) {
+  const response = await fetch("/api/me", {
+    method: "GET",
+    headers: {
+      accept: "*/*",
+      "ngrok-skip-browser-warning": "true",
+      Authorization: `Bearer ${token}`,
+    },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    let detail = "No se pudo validar la sesion";
+
+    try {
+      const data = await response.json();
+      detail =
+        data?.message ??
+        data?.error ??
+        data?.detail ??
+        `No se pudo validar la sesion (${response.status})`;
+    } catch {
+      detail = `No se pudo validar la sesion (${response.status})`;
     }
 
     throw new Error(detail);
@@ -119,6 +150,12 @@ function normalizeSessionUser(data) {
       null,
     rolNombre: roleName,
     role: roleName,
+    permisos: Array.isArray(rawUser?.permisos)
+      ? rawUser.permisos
+      : Array.isArray(data?.permisos)
+        ? data.permisos
+        : [],
+    raw: data,
   };
 }
 
@@ -208,20 +245,25 @@ export default function AssignmentLogin({ onLoginSuccess }) {
     setLoadingLogin(true);
 
     try {
-      const data = {
-        username: form.identifier.trim(),
-        nombre: form.identifier.trim(),
-      };
-      const sessionToken = resolveSessionToken(data) || "local-session-token";
-      localStorage.setItem("token", sessionToken);
-      localStorage.setItem(
-        "enabledPermissionCodes",
-        JSON.stringify(["dashboard", "mantenimiento", "usuarios", "configuracion"])
-      );
+      const data = await loginUsuario({
+        identifier: form.identifier.trim(),
+        password: form.password,
+      });
+      const sessionToken = resolveSessionToken(data);
 
-      localStorage.setItem("user", JSON.stringify(normalizeSessionUser(data)));
+      if (!sessionToken) {
+        throw new Error("Backend no devolvio token");
+      }
+
+      localStorage.setItem("token", sessionToken);
+      localStorage.removeItem("user");
+      localStorage.removeItem("enabledPermissionCodes");
+      localStorage.removeItem("enabledPermissionIds");
+      localStorage.removeItem("permissionIdsByCode");
       localStorage.setItem("sessionIdentifier", form.identifier.trim());
       localStorage.setItem("rememberSession", rememberSession ? "true" : "false");
+      const meData = await getAuthenticatedUser(sessionToken);
+      localStorage.setItem("user", JSON.stringify(normalizeSessionUser(meData)));
 
       if (onLoginSuccess) {
         onLoginSuccess();
@@ -229,6 +271,8 @@ export default function AssignmentLogin({ onLoginSuccess }) {
         navigate("/dashboard", { replace: true });
       }
     } catch (error) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
       setLoginError(error.message || "No se pudo iniciar sesion");
     } finally {
       setLoadingLogin(false);

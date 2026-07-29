@@ -11,6 +11,9 @@ export const queryKeys = {
   usuarios: {
     all: ["usuarios"],
   },
+  clientes: {
+    all: ["clientes"],
+  },
   vendedores: {
     all: ["vendedores"],
   },
