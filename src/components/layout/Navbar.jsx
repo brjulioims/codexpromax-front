@@ -187,7 +187,7 @@ export default function Navbar() {
               className="group relative flex flex-col leading-none transition-all duration-300"
           >
             <span className="text-[1.7rem] font-black tracking-tight text-white transition-colors duration-300 group-hover:text-[#d15f03]">
-              CODEXPRO
+              IMSGLOBAL
             </span>
           </p>
         </div>

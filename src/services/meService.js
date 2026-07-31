@@ -1,5 +1,15 @@
 export const ME_API_URL = "/api/me";
 
+function clearStoredSession() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  localStorage.removeItem("sessionIdentifier");
+  localStorage.removeItem("rememberSession");
+  localStorage.removeItem("enabledPermissionCodes");
+  localStorage.removeItem("enabledPermissionIds");
+  localStorage.removeItem("permissionIdsByCode");
+}
+
 function buildHeaders() {
   const token = localStorage.getItem("token");
   return {
@@ -11,6 +21,10 @@ function buildHeaders() {
 
 async function parseResponse(response) {
   if (!response.ok) {
+    if (response.status === 401) {
+      clearStoredSession();
+    }
+
     let detail = "";
 
     try {
