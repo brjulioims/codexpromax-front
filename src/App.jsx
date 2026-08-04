@@ -9,6 +9,7 @@ import ProtectedRoute from "./components/routes/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Permisos from "./components/forms/Mantenimiento/Permisos";
 import GestionClientes from "./components/forms/GestionClientes/GestionClientes";
+import DetalleCliente from "./components/forms/DetalleCliente/DetalleCliente";
 import Usuario from "./components/forms/Mantenimiento/Usuario";
 
 
@@ -112,6 +113,14 @@ export default function App() {
             element={
               <LayoutShell>
                 <GestionClientes />
+              </LayoutShell>
+            }
+          />
+          <Route
+            path="/clientes/detalle_cliente"
+            element={
+              <LayoutShell>
+                <DetalleCliente />
               </LayoutShell>
             }
           />

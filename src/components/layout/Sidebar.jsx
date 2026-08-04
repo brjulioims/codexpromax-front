@@ -240,7 +240,7 @@ export default function Sidebar({
             >
               <div className="p-2">
                 <span className="text-xl font-black text-white tracking-wider">
-                  IMSGLOBAL
+                  IMSCONNECT
                 </span>
               </div>
             </button>
