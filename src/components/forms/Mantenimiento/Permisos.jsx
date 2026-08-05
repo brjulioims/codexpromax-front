@@ -948,17 +948,22 @@ export default function Permisos() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[330px_1fr] 2xl:gap-5">
         <aside className="rounded-lg border border-slate-200 dark:border-slate-800 bg-[#f8f9fb] dark:bg-slate-950 p-4 shadow-sm transition-colors duration-300">
           <div className="mb-4 2xl:mb-5">
-            <h3 className="text-base font-light uppercase text-semibold dark:text-slate-100 2xl:text-[18px]">
-              Roles del sistema
-            </h3>
-            <p className="mt-1 text-xs uppercase text-slate-400">
-              Selecciona un rol
-            </p>
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-900 text-[#0e0f16] dark:text-slate-100 transition-colors duration-300">
+                <UserCog size={18} />
+              </div>
+              <div>
+                <p className="text-base font-semibold uppercase text-[#101a3c] dark:text-slate-100 2xl:text-[18px]">
+                  Roles del sistema
+                </p>
+                <p className="mt-1 text-xs uppercase text-slate-400">Selecciona un rol</p>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {loadingRoles ? (
-              <div className="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-3">
+              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-3">
                 <Loading label="Cargando roles..." />
               </div>
             ) : roles.length ? (
@@ -968,26 +973,38 @@ export default function Permisos() {
                 return (
                   <div
                     key={item.id}
-                    className={`flex items-center justify-between rounded-lg px-4 py-3 transition 2xl:py-4 ${
+                    className={`group relative flex items-center overflow-hidden rounded-xl px-4 py-3.5 transition-all duration-300 ease-out 2xl:py-4 ${
                       active
-                        ? "bg-[#0d1b5e] dark:bg-blue-900/60 text-white shadow-md"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200"
+                        ? "bg-[#0d1b5e] dark:bg-blue-900/60 text-white shadow-lg shadow-[#0d1b5e]/10 dark:shadow-blue-900/20 ring-1 ring-[#0d1b5e]/10 dark:ring-blue-900/30"
+                        : "bg-white/60 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200 hover:shadow-sm border border-slate-200/60 dark:border-slate-800/60 hover:border-slate-200 dark:hover:border-slate-700"
                     }`}
                   >
                     <button
                       type="button"
                       onClick={() => setSelectedRoleId(item.id)}
-                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                      className="relative z-10 flex min-w-0 flex-1 items-center gap-4 text-left"
                     >
                       <span
-                        className={`h-2 w-2 rounded-full ${
-                          active ? "bg-orange-400" : "bg-slate-300"
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${
+                          active
+                            ? "bg-white/15 text-orange-300"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-[#0d1b5e]/10 dark:group-hover:bg-blue-900/30 group-hover:text-[#0d1b5e] dark:group-hover:text-blue-300"
                         }`}
-                      />
-                      <span className="truncate text-sm font-medium">{item.role}</span>
+                      >
+                        <span
+                          className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+                            active
+                              ? "bg-orange-400 shadow-[0_0_0_4px_rgba(251,146,60,0.15)]"
+                              : "bg-slate-300 dark:bg-slate-600 group-hover:bg-[#0d1b5e] dark:group-hover:bg-blue-400"
+                          }`}
+                        />
+                      </span>
+                      <span className="truncate text-sm font-semibold tracking-wide uppercase">
+                        {item.role}
+                      </span>
                     </button>
 
-                    <div className="ml-3 flex shrink-0 items-center gap-2">
+                    <div className="relative z-10 ml-3 flex shrink-0 items-center gap-2">
                       <Editar
                         onClick={() => {
                           setSelectedRoleId(item.id);
@@ -1019,7 +1036,7 @@ export default function Permisos() {
                 );
               })
             ) : (
-              <div className="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-500">
+              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-500">
                 No hay roles para mostrar.
               </div>
             )}

@@ -23,7 +23,7 @@ const particlesOptions = {
       grab: {
         distance: 145,
         links: {
-          opacity: 0.22,
+          opacity: 0.34,
         },
       },
     },
@@ -36,7 +36,7 @@ const particlesOptions = {
       color: "#ffffff",
       distance: 135,
       enable: true,
-      opacity: 0.12,
+      opacity: 0.22,
       width: 1,
     },
     move: {
@@ -54,16 +54,16 @@ const particlesOptions = {
         enable: true,
         area: 980,
       },
-      value: 54,
+      value: 78,
     },
     opacity: {
-      value: { min: 0.16, max: 0.42 },
+      value: { min: 0.24, max: 0.58 },
     },
     shape: {
       type: "circle",
     },
     size: {
-      value: { min: 1, max: 2.8 },
+      value: { min: 1.2, max: 3.4 },
     },
   },
   detectRetina: true,

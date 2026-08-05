@@ -397,7 +397,7 @@ export default function AuthTransition({ onComplete }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex min-h-screen items-center justify-center overflow-hidden px-5 py-8"
+      className="fixed inset-0 z-50 flex min-h-screen items-center justify-center overflow-hidden px-5 py-6 xl:px-6 xl:py-4 2xl:py-8"
       style={{
         background:
           "radial-gradient(circle at top, #111b3e 0%, #070b19 42%, #03050c 100%)",
@@ -407,14 +407,6 @@ export default function AuthTransition({ onComplete }) {
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap');
-
-          .auth-grid {
-            background-image:
-              linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-            background-size: 42px 42px;
-            mask-image: linear-gradient(to bottom, black, transparent 90%);
-          }
 
           .auth-noise {
             background-image:
@@ -455,20 +447,18 @@ export default function AuthTransition({ onComplete }) {
         `}
       </style>
 
-      <div className="auth-grid pointer-events-none absolute inset-0" />
-
       <div className="auth-noise pointer-events-none absolute inset-0 opacity-[0.025]" />
 
       <motion.div
-        className="pointer-events-none absolute -left-36 -top-40 h-[30rem] w-[30rem] rounded-full blur-[130px]"
+        className="pointer-events-none absolute -left-36 -top-40 h-[34rem] w-[34rem] rounded-full blur-[130px]"
         style={{
-          backgroundColor: "rgba(53, 90, 255, 0.24)",
+          backgroundColor: "rgba(53, 90, 255, 0.34)",
         }}
         animate={{
           x: [-20, 50, -20],
           y: [-15, 40, -15],
           scale: [1, 1.12, 1],
-          opacity: [0.35, 0.55, 0.35],
+          opacity: [0.48, 0.72, 0.48],
         }}
         transition={{
           duration: 9,
@@ -478,15 +468,15 @@ export default function AuthTransition({ onComplete }) {
       />
 
       <motion.div
-        className="pointer-events-none absolute -bottom-40 -right-32 h-[32rem] w-[32rem] rounded-full blur-[140px]"
+        className="pointer-events-none absolute -bottom-40 -right-32 h-[36rem] w-[36rem] rounded-full blur-[140px]"
         style={{
-          backgroundColor: "rgba(209, 95, 3, 0.3)",
+          backgroundColor: "rgba(209, 95, 3, 0.4)",
         }}
         animate={{
           x: [20, -45, 20],
           y: [25, -35, 25],
           scale: [1.08, 0.96, 1.08],
-          opacity: [0.35, 0.58, 0.35],
+          opacity: [0.45, 0.72, 0.45],
         }}
         transition={{
           duration: 10,
@@ -496,10 +486,10 @@ export default function AuthTransition({ onComplete }) {
       />
 
       <motion.div
-        className="pointer-events-none absolute left-[15%] top-[22%] h-2 w-2 rounded-full bg-white/35"
+        className="pointer-events-none absolute left-[15%] top-[22%] h-3 w-3 rounded-full bg-white/60"
         animate={{
           y: [0, -18, 0],
-          opacity: [0.2, 0.8, 0.2],
+          opacity: [0.35, 1, 0.35],
         }}
         transition={{
           duration: 4,
@@ -509,11 +499,11 @@ export default function AuthTransition({ onComplete }) {
       />
 
       <motion.div
-        className="pointer-events-none absolute bottom-[20%] right-[18%] h-1.5 w-1.5 rounded-full"
+        className="pointer-events-none absolute bottom-[20%] right-[18%] h-2.5 w-2.5 rounded-full"
         style={{ backgroundColor: ACCENT }}
         animate={{
           y: [0, 22, 0],
-          opacity: [0.25, 0.85, 0.25],
+          opacity: [0.35, 1, 0.35],
         }}
         transition={{
           duration: 5,
@@ -522,12 +512,41 @@ export default function AuthTransition({ onComplete }) {
         }}
       />
 
-      <div className="relative z-10 flex w-full max-w-[560px] flex-col items-center">
+      <motion.div
+        className="pointer-events-none absolute right-[24%] top-[16%] h-2 w-2 rounded-full bg-white/70"
+        animate={{
+          y: [0, 16, 0],
+          x: [0, -8, 0],
+          opacity: [0.3, 0.95, 0.3],
+        }}
+        transition={{
+          duration: 4.8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+
+      <motion.div
+        className="pointer-events-none absolute bottom-[26%] left-[20%] h-2 w-2 rounded-full"
+        style={{ backgroundColor: "rgba(209, 95, 3, 0.9)" }}
+        animate={{
+          y: [0, -20, 0],
+          x: [0, 10, 0],
+          opacity: [0.28, 0.92, 0.28],
+        }}
+        transition={{
+          duration: 5.4,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+
+      <div className="relative z-10 flex w-full max-w-[500px] flex-col items-center 2xl:max-w-[560px]">
         <motion.div
           initial={{ opacity: 0, y: -15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-7 flex items-center gap-3"
+          className="mb-5 flex items-center gap-3 2xl:mb-7"
         >
           <div
             className="flex h-9 w-9 items-center justify-center rounded-xl border"
@@ -549,7 +568,7 @@ export default function AuthTransition({ onComplete }) {
               CODEX PRO MAX
             </p>
 
-            <p className="mt-0.5 text-sm font-light text-white/75">
+            <p className="mt-0.5 text-[13px] font-light text-white/75 2xl:text-sm">
               Entorno empresarial seguro
             </p>
           </div>
@@ -571,7 +590,7 @@ export default function AuthTransition({ onComplete }) {
               ease: "easeInOut",
             },
           }}
-          className="relative w-full overflow-hidden rounded-[30px] border border-white/[0.09] bg-white/[0.055] p-6 shadow-[0_35px_100px_rgba(0,0,0,0.55)] backdrop-blur-2xl sm:p-8"
+          className="relative w-full overflow-hidden rounded-[28px] border border-white/[0.09] bg-white/[0.055] p-5 shadow-[0_35px_100px_rgba(0,0,0,0.55)] backdrop-blur-2xl sm:p-6 2xl:rounded-[30px] 2xl:p-8"
         >
           <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/45 to-transparent" />
 
@@ -614,7 +633,7 @@ export default function AuthTransition({ onComplete }) {
               </div>
             </div>
 
-            <div className="mt-10 flex flex-col items-center text-center">
+            <div className="mt-7 flex flex-col items-center text-center 2xl:mt-10">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentStep.id}
@@ -638,14 +657,14 @@ export default function AuthTransition({ onComplete }) {
                     stiffness: 230,
                     damping: 18,
                   }}
-                  className="relative flex h-24 w-24 items-center justify-center rounded-[27px] border border-white/[0.1] bg-white/[0.055]"
+                  className="relative flex h-20 w-20 items-center justify-center rounded-[23px] border border-white/[0.1] bg-white/[0.055] 2xl:h-24 2xl:w-24 2xl:rounded-[27px]"
                   style={{
                     boxShadow:
                       "inset 0 1px 0 rgba(255,255,255,0.08), 0 20px 50px rgba(0,0,0,0.4)",
                   }}
                 >
                   <motion.div
-                    className="absolute inset-3 rounded-[21px]"
+                    className="absolute inset-2.5 rounded-[18px] 2xl:inset-3 2xl:rounded-[21px]"
                     style={{
                       backgroundColor: "rgba(209, 95, 3, 0.11)",
                       boxShadow:
@@ -663,9 +682,9 @@ export default function AuthTransition({ onComplete }) {
                   />
 
                   <CurrentIcon
-                    className={`relative z-10 h-9 w-9 ${
-                      isLoadingStep ? "animate-spin" : ""
-                    }`}
+                      className={`relative z-10 h-8 w-8 2xl:h-9 2xl:w-9 ${
+                        isLoadingStep ? "animate-spin" : ""
+                      }`}
                     style={{ color: ACCENT }}
                     strokeWidth={1.55}
                   />
@@ -694,7 +713,7 @@ export default function AuthTransition({ onComplete }) {
                     duration: 0.45,
                     ease: "easeOut",
                   }}
-                  className="mt-8"
+                  className="mt-6 2xl:mt-8"
                 >
                   <p
                     className="text-[10px] font-semibold uppercase tracking-[0.42em]"
@@ -703,18 +722,18 @@ export default function AuthTransition({ onComplete }) {
                     Paso {currentStep.number}
                   </p>
 
-                  <h1 className="mt-3 text-xl font-medium tracking-[0.14em] text-white sm:text-2xl">
+                  <h1 className="mt-3 text-[1.15rem] font-medium tracking-[0.12em] text-white sm:text-[1.35rem] 2xl:text-2xl">
                     {currentStep.text}
                   </h1>
 
-                  <p className="mt-3 text-sm font-light tracking-[0.08em] text-white/40">
+                  <p className="mt-2 text-[13px] font-light tracking-[0.06em] text-white/40 2xl:mt-3 2xl:text-sm 2xl:tracking-[0.08em]">
                     {currentStep.description}
                   </p>
                 </motion.div>
               </AnimatePresence>
             </div>
 
-            <div className="mt-10">
+            <div className="mt-7 2xl:mt-10">
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-white/30">
                   Progreso del acceso
@@ -750,7 +769,7 @@ export default function AuthTransition({ onComplete }) {
               </div>
             </div>
 
-            <div className="mt-8 grid grid-cols-3 gap-2 sm:gap-3">
+            <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-2.5 2xl:mt-8 2xl:gap-3">
               {STEPS.map((item, index) => {
                 const isActive = index === step;
                 const isCompleted = index < step;
@@ -763,7 +782,7 @@ export default function AuthTransition({ onComplete }) {
                       opacity: isActive || isCompleted ? 1 : 0.42,
                     }}
                     transition={{ duration: 0.3 }}
-                    className="relative overflow-hidden rounded-2xl border px-2 py-3 text-center sm:px-3"
+                    className="relative overflow-hidden rounded-2xl border px-2 py-2.5 text-center sm:px-2.5 2xl:px-3 2xl:py-3"
                     style={{
                       borderColor: isActive
                         ? "rgba(209, 95, 3, 0.36)"
@@ -813,7 +832,7 @@ export default function AuthTransition({ onComplete }) {
                     </div>
 
                     <p
-                      className="mt-2 truncate text-[9px] font-medium uppercase tracking-[0.13em]"
+                      className="mt-1.5 truncate text-[9px] font-medium uppercase tracking-[0.11em] 2xl:mt-2 2xl:tracking-[0.13em]"
                       style={{
                         color: isActive
                           ? "rgba(255,255,255,0.85)"
@@ -833,7 +852,7 @@ export default function AuthTransition({ onComplete }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.6 }}
-          className="mt-6 flex items-center gap-2 text-[10px] font-light uppercase tracking-[0.24em] text-white/25"
+          className="mt-4 flex items-center gap-2 text-[10px] font-light uppercase tracking-[0.24em] text-white/25 2xl:mt-6"
         >
           <ShieldCheck className="h-3.5 w-3.5" />
           Conexión cifrada y protegida
