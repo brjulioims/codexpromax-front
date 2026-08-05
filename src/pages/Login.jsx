@@ -312,7 +312,7 @@ export default function AssignmentLogin({ onLoginSuccess }) {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-white/50">
                     Plataforma empresarial
                   </p>
-                  <h1 className="mt-1 text-2xl font-black tracking-tight">CODEXPRO</h1>
+                  <h1 className="mt-1 text-2xl font-black uppercase tracking-tight">Immigration Solution Connect</h1>
                 </div>
               </div>
             </div>
