@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BriefcaseBusiness, Filter } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
 import HeaderBox from "../../ui/HeaderBox";
@@ -15,9 +15,15 @@ import { useUsuariosQuery } from "../../../hooks/queries/useUsuariosQuery";
 
 export default function ExpedienteAsignado() {
   const { state } = useLocation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const cliente = state?.cliente ?? {};
   const nombre = cliente.nombre || cliente.nombreCliente || "Expedientes Asignados";
+  const rawUser = JSON.parse(localStorage.getItem("user") ?? "{}");
+  const currentUserId = Number(
+    rawUser?.id ?? rawUser?.usuario_id ?? rawUser?.user_id ?? null
+  );
+  const currentUserRoleId = Number(rawUser?.rolId ?? rawUser?.rol_id ?? rawUser?.role_id ?? null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedExpediente, setSelectedExpediente] = useState(null);
@@ -31,11 +37,28 @@ export default function ExpedienteAsignado() {
   };
   const [filters, setFilters] = useState(defaultFilters);
   const [draftFilters, setDraftFilters] = useState(defaultFilters);
-  const { data: expedientesAsignados = [], isLoading } = useQuery({
-    queryKey: ["expedientes", "asignados"],
-    queryFn: () => getExpedientesAsignados(),
-  });
   const { data: usuarios = [] } = useUsuariosQuery();
+  const paralegalRoleIds = useMemo(() => {
+    return new Set(
+      usuarios
+        .filter((usuario) => {
+          const rol = `${usuario?.rolNombre ?? usuario?.role ?? ""}`.toLowerCase();
+          return rol.includes("paralegal");
+        })
+        .map((usuario) => Number(usuario?.rolId))
+        .filter(Number.isFinite)
+    );
+  }, [usuarios]);
+  const isParalegalUser = paralegalRoleIds.has(currentUserRoleId);
+  const { data: expedientesAsignados = [], isLoading } = useQuery({
+    queryKey: ["expedientes", "asignados", isParalegalUser ? currentUserId : "all"],
+    queryFn: () =>
+      getExpedientesAsignados(
+        isParalegalUser && Number.isFinite(currentUserId)
+          ? { paralegal_id: currentUserId }
+          : {}
+      ),
+  });
   const { mutateAsync: reasignarMutate, isPending: savingEdit } = useMutation({
     mutationFn: ({ expedienteId, payload }) =>
       reasignarParalegal(expedienteId, payload),
@@ -52,6 +75,11 @@ export default function ExpedienteAsignado() {
       oficina: item.oficina || "No registrado",
       categoria: item.categoria_proceso || "No registrado",
       proceso: item.tipo_proceso || "No registrado",
+      estadoPrincipal: item.estado_principal || "No registrado",
+      subEstado: item.sub_estado || "No registrado",
+      prioridad: item.semaforo_prioridad || "No registrado",
+      avanceDocumental: item.porcentaje_avance_doc || "No registrado",
+      fechaActualizacion: item.fecha_actualizacion || "No registrado",
       paralegal:
         item.paralegal_asignado?.nombre ||
         item.paralegal_nombre ||
@@ -115,8 +143,40 @@ export default function ExpedienteAsignado() {
   }, [usuarios]);
 
   const columns = [
-    { header: "N° Expediente", accessor: "numeroExpediente" },
-    { header: "Nombre", accessor: "nombre" },
+    {
+      header: "N° Expediente",
+      accessor: "numeroExpediente",
+      render: (value, row) => (
+        <button
+          type="button"
+          onClick={() =>
+            navigate("/quality_asignador/detalle_expediente", {
+              state: { expediente: row },
+            })
+          }
+          className="font-semibold text-[#0e183f] transition hover:text-[#21497d]"
+        >
+          {value}
+        </button>
+      ),
+    },
+    {
+      header: "Nombre",
+      accessor: "nombre",
+      render: (value, row) => (
+        <button
+          type="button"
+          onClick={() =>
+            navigate("/quality_asignador/detalle_expediente", {
+              state: { expediente: row },
+            })
+          }
+          className="font-semibold text-[#0e183f] transition hover:text-[#21497d]"
+        >
+          {value}
+        </button>
+      ),
+    },
     { header: "Oficina", accessor: "oficina" },
     { header: "Categoria", accessor: "categoria" },
     { header: "Proceso", accessor: "proceso" },
