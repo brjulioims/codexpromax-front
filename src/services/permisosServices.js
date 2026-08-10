@@ -2,6 +2,7 @@ const PERMISOS_API_URL = "/api/permisos";
 
 function buildHeaders(includeJson = false) {
   const token = localStorage.getItem("token");
+
   return {
     accept: "application/json",
     "ngrok-skip-browser-warning": "true",
@@ -33,7 +34,9 @@ async function parseResponse(response, actionLabel) {
     }
 
     throw new Error(
-      `Error al ${actionLabel}: ${response.status}${detail ? ` - ${detail}` : ""}`
+      `Error al ${actionLabel}: ${response.status}${
+        detail ? ` - ${detail}` : ""
+      }`
     );
   }
 
@@ -49,66 +52,56 @@ function resolveCollection(data) {
   if (Array.isArray(data?.data)) return data.data;
   if (Array.isArray(data?.results)) return data.results;
   if (Array.isArray(data?.permisos)) return data.permisos;
+
   return [];
 }
 
 function normalizePermiso(item) {
-  const id = item?.id;
+  const id = Number(item?.id);
   const nombre = `${item?.nombre ?? ""}`.trim();
-  const clave = `${item?.clave ?? item?.codigo ?? ""}`.trim();
+  const modulo = `${item?.modulo ?? ""}`.trim();
   const descripcion = `${item?.descripcion ?? ""}`.trim();
-  const section = `${item?.section ?? ""}`.trim();
-  const parent_id = item?.parent_id ?? item?.parentId ?? null;
-  const orden = item?.orden ?? item?.order ?? null;
 
-  if (id == null || !nombre) return null;
+  if (!Number.isFinite(id) || !nombre) {
+    return null;
+  }
 
   return {
-    id: Number(id),
+    id,
     nombre,
-    clave,
-    codigo: clave,
+    modulo,
     descripcion,
-    section,
-    parent_id: parent_id == null ? null : Number(parent_id),
-    orden: orden == null ? null : Number(orden),
   };
 }
 
 function buildPermisoPayload(payload) {
-  const clave = `${payload?.clave ?? payload?.codigo ?? ""}`.trim();
-
   return {
     nombre: `${payload?.nombre ?? ""}`.trim(),
-    clave,
-    codigo: clave,
+    modulo: `${payload?.modulo ?? ""}`.trim(),
     descripcion: `${payload?.descripcion ?? ""}`.trim(),
-    section: `${payload?.section ?? ""}`.trim(),
-    ...(payload?.parent_id != null ? { parent_id: Number(payload.parent_id) } : {}),
-    ...(payload?.orden != null ? { orden: Number(payload.orden) } : {}),
   };
 }
 
-function buildRolPermisoPayload(payload) {
-  const rol_id = Number(payload?.rol_id);
-  const permiso_id = Number(payload?.permiso_id);
+function validatePermisoPayload(payload) {
+  const normalizedPayload = buildPermisoPayload(payload);
 
-  if (!Number.isFinite(rol_id) || !Number.isFinite(permiso_id)) {
-    throw new Error("rol_id y permiso_id son obligatorios.");
+  if (!normalizedPayload.nombre) {
+    throw new Error("El nombre del permiso es obligatorio.");
   }
 
-  return {
-    rol_id,
-    permiso_id,
-    valor: Boolean(payload?.valor),
-  };
+  if (!normalizedPayload.modulo) {
+    throw new Error("El modulo del permiso es obligatorio.");
+  }
+
+  return normalizedPayload;
 }
 
-function shouldTryNextRolPermisoRoute(error) {
-  const message = `${error?.message ?? ""}`;
-  return /:\s(400|404|405)\b/.test(message);
-}
-
+/**
+ * Lista todos los permisos.
+ *
+ * El backend puede devolverlos agrupados por modulo,
+ * pero el endpoint actualmente muestra una coleccion plana.
+ */
 export async function getPermisos() {
   try {
     const response = await fetch(PERMISOS_API_URL, {
@@ -117,142 +110,138 @@ export async function getPermisos() {
       credentials: "include",
     });
 
-    const data = await parseResponse(response, "obtener permisos");
+    const data = await parseResponse(
+      response,
+      "obtener permisos"
+    );
 
-    return resolveCollection(data).map(normalizePermiso).filter(Boolean);
+    return resolveCollection(data)
+      .map(normalizePermiso)
+      .filter(Boolean);
   } catch (error) {
-    if (/:\s502\b/.test(`${error?.message ?? ""}`)) {
-      return [];
-    }
     console.error("Error consultando permisos", error);
     return [];
   }
 }
 
-export async function getPermisoById(id) {
-  try {
-    const response = await fetch(`${PERMISOS_API_URL}/${id}`, {
-      method: "GET",
-      headers: buildHeaders(),
-      credentials: "include",
-    });
-
-    const data = await parseResponse(response, "obtener permiso");
-
-    return normalizePermiso(data?.data ?? data);
-  } catch (error) {
-    console.error("Error consultando permiso", error);
-    return null;
-  }
-}
-
+/**
+ * Crea un permiso.
+ */
 export async function createPermiso(payload) {
   try {
+    const normalizedPayload = validatePermisoPayload(payload);
+
     const response = await fetch(PERMISOS_API_URL, {
       method: "POST",
       headers: buildHeaders(true),
-      body: JSON.stringify(buildPermisoPayload(payload)),
+      body: JSON.stringify(normalizedPayload),
       credentials: "include",
     });
 
-    const data = await parseResponse(response, "crear permiso");
+    const data = await parseResponse(
+      response,
+      "crear permiso"
+    );
 
-    return normalizePermiso(data?.data ?? data);
+    return normalizePermiso(data?.data ?? data) ?? data;
   } catch (error) {
     console.error("Error creando permiso", error);
     throw error;
   }
 }
 
+/**
+ * Actualiza un permiso existente.
+ */
 export async function updatePermiso(id, payload) {
+  const permisoId = Number(id);
+
+  if (!Number.isFinite(permisoId)) {
+    throw new Error("El ID del permiso es obligatorio.");
+  }
+
   try {
-    const response = await fetch(`${PERMISOS_API_URL}/${id}`, {
-      method: "PUT",
-      headers: buildHeaders(true),
-      body: JSON.stringify(buildPermisoPayload(payload)),
-      credentials: "include",
-    });
+    const normalizedPayload = validatePermisoPayload(payload);
 
-    const data = await parseResponse(response, "editar permiso");
+    const response = await fetch(
+      `${PERMISOS_API_URL}/${permisoId}`,
+      {
+        method: "PUT",
+        headers: buildHeaders(true),
+        body: JSON.stringify(normalizedPayload),
+        credentials: "include",
+      }
+    );
 
-    return normalizePermiso(data?.data ?? data);
+    const data = await parseResponse(
+      response,
+      "actualizar permiso"
+    );
+
+    return normalizePermiso(data?.data ?? data) ?? data;
   } catch (error) {
-    console.error("Error editando permiso", error);
+    console.error("Error actualizando permiso", error);
+    throw error;
+  }
+}
+
+/**
+ * Elimina un permiso.
+ */
+export async function deletePermiso(id) {
+  const permisoId = Number(id);
+
+  if (!Number.isFinite(permisoId)) {
+    throw new Error("El ID del permiso es obligatorio.");
+  }
+
+  try {
+    const response = await fetch(
+      `${PERMISOS_API_URL}/${permisoId}`,
+      {
+        method: "DELETE",
+        headers: buildHeaders(),
+        credentials: "include",
+      }
+    );
+
+    return await parseResponse(
+      response,
+      "eliminar permiso"
+    );
+  } catch (error) {
+    console.error("Error eliminando permiso", error);
     throw error;
   }
 }
 
 export async function saveRolPermiso(payload) {
-  const normalizedPayload = buildRolPermisoPayload(payload);
-  const requestVariants = [
-    {
-      url: `/api/roles/${normalizedPayload.rol_id}/permisos`,
-      method: "POST",
-      body: JSON.stringify({
-        permiso_id: normalizedPayload.permiso_id,
-        valor: normalizedPayload.valor,
-      }),
-    },
-    {
-      url: `${PERMISOS_API_URL}/roles`,
-      method: "POST",
-      body: JSON.stringify(normalizedPayload),
-    },
-    {
-      url: `${PERMISOS_API_URL}/asignar`,
-      method: "POST",
-      body: JSON.stringify(normalizedPayload),
-    },
-    {
-      url: `${PERMISOS_API_URL}/rol`,
-      method: "POST",
-      body: JSON.stringify(normalizedPayload),
-    },
-  ];
-  let lastError = null;
+  const rolId = Number(payload?.rol_id);
+  const permisoId = Number(payload?.permiso_id);
 
-  for (const request of requestVariants) {
-    try {
-      const response = await fetch(request.url, {
-        method: request.method,
-        headers: buildHeaders(true),
-        body: request.body,
-        credentials: "include",
-      });
-
-      return await parseResponse(response, "guardar permiso del rol");
-    } catch (error) {
-      lastError = error;
-
-      if (!shouldTryNextRolPermisoRoute(error)) {
-        throw error;
-      }
-    }
+  if (!Number.isFinite(rolId)) {
+    throw new Error("El ID del rol es obligatorio.");
   }
 
-  throw (
-    lastError ??
-    new Error(
-      "No se encontro un endpoint valido para guardar el permiso del rol."
-    )
-  );
-}
+  if (!Number.isFinite(permisoId)) {
+    throw new Error("El ID del permiso es obligatorio.");
+  }
 
-export async function deletePermiso(id) {
   try {
-    const response = await fetch(`${PERMISOS_API_URL}/${id}`, {
-      method: "DELETE",
-      headers: buildHeaders(),
+    const response = await fetch(`${PERMISOS_API_URL}/rol`, {
+      method: "POST",
+      headers: buildHeaders(true),
+      body: JSON.stringify({
+        rol_id: rolId,
+        permiso_id: permisoId,
+        valor: Boolean(payload?.valor),
+      }),
       credentials: "include",
     });
 
-    if (!response.ok) {
-      throw new Error(`Error al eliminar permiso: ${response.status}`);
-    }
-
-    return true;
+    return await parseResponse(response, "guardar permiso del rol");
   } catch (error) {
-    console.error("Error eliminando permiso", error);
+    console.error("Error guardando permiso del rol", error);
     throw error;
   }
 }

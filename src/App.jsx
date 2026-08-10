@@ -10,6 +10,9 @@ import Dashboard from "./pages/Dashboard";
 import Permisos from "./components/forms/Mantenimiento/Permisos";
 import GestionClientes from "./components/forms/GestionClientes/GestionClientes";
 import DetalleCliente from "./components/forms/DetalleCliente/DetalleCliente";
+import ExpedienteAsignado from "./components/forms/qualityAsignador/ExpedienteAsignado";
+import ExpedienteSinAsignar from "./components/forms/qualityAsignador/ExpedienteSinAsignar";
+import DetalleExpediente from "./components/forms/qualityAsignador/DetalleExpediente/DetalleExpediente";
 import Usuario from "./components/forms/Mantenimiento/Usuario";
 
 
@@ -125,7 +128,30 @@ export default function App() {
             }
           />
         </Route>
-
+        <Route
+          path="/quality_asignador"
+          element={
+            <LayoutShell>
+              <ExpedienteAsignado />
+            </LayoutShell>
+          }
+        />
+        <Route
+          path="/quality_asignador/sin_asignar"
+          element={
+            <LayoutShell>
+              <ExpedienteSinAsignar />
+            </LayoutShell>
+          }
+        />
+        <Route
+          path="/quality_asignador/detalle_expediente"
+          element={
+            <LayoutShell>
+              <DetalleExpediente />
+            </LayoutShell>
+          }
+        />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

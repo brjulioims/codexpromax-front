@@ -46,6 +46,25 @@ const SIDEBAR_ITEMS = [
     activeMatch: ["/clientes"],
     route: "/clientes",
   },
+  {
+    code: "quality_asignador",
+    icon: UserRoundSearch,
+    label: "Quality / Asignador",
+    childrenItems: [
+      {
+        code: "quality_asignador",
+        label: "Expediente sin asignar",
+        activeMatch: ["/quality_asignador/sin_asignar"],
+        route: "/quality_asignador/sin_asignar",
+      },
+       {
+        code: "quality_asignador",
+        label: "Expediente Asignado",
+        activeMatch: ["/quality_asignador"],
+        route: "/quality_asignador",
+      },
+    ],
+  },
 ];
 
 function normalizePermissionCode(value) {
