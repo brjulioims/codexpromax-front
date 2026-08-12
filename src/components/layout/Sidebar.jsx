@@ -6,6 +6,7 @@ import {
   Menu,
   X,
   UserRoundSearch,
+  Globe,
 } from "lucide-react";
 import packageJson from "../../../package.json";
 
@@ -62,6 +63,31 @@ const SIDEBAR_ITEMS = [
         label: "Expediente Asignado",
         activeMatch: ["/quality_asignador"],
         route: "/quality_asignador",
+      },
+    ],
+  },
+  {
+    code: "traduccion",
+    icon: Globe,
+    label: "Traducción",
+    childrenItems: [
+      {
+        code: "quality_traduccion",
+        label: "Quality - Traducción",
+        activeMatch: ["/quality_traduccion"],
+        route: "/quality_traduccion",
+      },
+      {
+        code: "mis_traducciones",
+        label: "Mis Traducciones",
+        activeMatch: ["/mis_traducciones"],
+        route: "/mis_traducciones",
+      },
+      {
+        code: "mis_auditorias_traduccion",
+        label: "Mis Auditorías",
+        activeMatch: ["/mis_auditorias_traduccion"],
+        route: "/mis_auditorias_traduccion",
       },
     ],
   },

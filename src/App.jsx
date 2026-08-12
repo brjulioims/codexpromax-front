@@ -14,6 +14,9 @@ import ExpedienteAsignado from "./components/forms/qualityAsignador/ExpedienteAs
 import ExpedienteSinAsignar from "./components/forms/qualityAsignador/ExpedienteSinAsignar";
 import DetalleExpediente from "./components/forms/qualityAsignador/DetalleExpediente/DetalleExpediente";
 import Usuario from "./components/forms/Mantenimiento/Usuario";
+import QualityTraduccion from "./components/forms/Traduccion/QualityTraduccion";
+import MisAuditoriasTraduccion from "./components/forms/Traduccion/MisAuditoriasTraduccion";
+import MisTraducciones from "./components/forms/Traduccion/MisTraducciones";
 
 
 import { hasPendingAzureLogin } from "./services/loginAzureService";
@@ -124,6 +127,30 @@ export default function App() {
             element={
               <LayoutShell>
                 <DetalleCliente />
+              </LayoutShell>
+            }
+          />
+          <Route
+            path="/quality_traduccion"
+            element={
+              <LayoutShell>
+                <QualityTraduccion />
+              </LayoutShell>
+            }
+          />
+          <Route
+            path="/mis_auditorias_traduccion"
+            element={
+              <LayoutShell>
+                <MisAuditoriasTraduccion />
+              </LayoutShell>
+            }
+          />
+          <Route
+            path="/mis_traducciones"
+            element={
+              <LayoutShell>
+                <MisTraducciones />
               </LayoutShell>
             }
           />

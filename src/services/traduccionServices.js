@@ -349,4 +349,164 @@ export async function auditarQualityTraduccion(id, payload) {
   }
 }
 
+export async function getMisAsignacionesQuality(usuarioId) {
+  try {
+    const response = await fetch(`/api/traducciones/mis-asignaciones-quality?usuario_id=${usuarioId}`, {
+      method: "GET",
+      headers: buildHeaders(),
+      credentials: "include",
+    });
+
+    const data = await parseResponse(response, "obtener mis asignaciones de quality");
+    return data?.data ?? [];
+  } catch (error) {
+    console.error("Error consultando mis asignaciones de quality", error);
+    return [];
+  }
+}
+
+export async function aprobarTraduccionQuality(expedienteId, documentoId, payload) {
+  try {
+    const response = await fetch(`/api/expedientes/${expedienteId}/documentos/${documentoId}/traduccion/aprobar-quality`, {
+      method: "POST",
+      headers: buildHeaders(true),
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+
+    return await parseResponse(response, "aprobar traducción");
+  } catch (error) {
+    console.error("Error aprobando traducción", error);
+    throw error;
+  }
+}
+
+export async function rechazarTraduccionQuality(expedienteId, documentoId, payload) {
+  try {
+    const response = await fetch(`/api/expedientes/${expedienteId}/documentos/${documentoId}/traduccion/rechazar-quality`, {
+      method: "POST",
+      headers: buildHeaders(true),
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+
+    return await parseResponse(response, "rechazar traducción");
+  } catch (error) {
+    console.error("Error rechazando traducción", error);
+    throw error;
+  }
+}
+
+export async function getPendientesTraductor() {
+  try {
+    const response = await fetch("/api/traducciones/pendientes-traductor", {
+      method: "GET",
+      headers: buildHeaders(),
+      credentials: "include",
+    });
+
+    const data = await parseResponse(response, "obtener pendientes traductor");
+    return data?.data ?? [];
+  } catch (error) {
+    console.error("Error consultando pendientes traductor", error);
+    return [];
+  }
+}
+
+export async function getPendientesQuality() {
+  try {
+    const response = await fetch("/api/traducciones/pendientes-quality", {
+      method: "GET",
+      headers: buildHeaders(),
+      credentials: "include",
+    });
+
+    const data = await parseResponse(response, "obtener pendientes quality");
+    return data?.data ?? [];
+  } catch (error) {
+    console.error("Error consultando pendientes quality", error);
+    return [];
+  }
+}
+
+export async function asignarTraductor(expedienteId, documentoId, payload) {
+  try {
+    const response = await fetch(`/api/expedientes/${expedienteId}/documentos/${documentoId}/traduccion/asignar-traductor`, {
+      method: "POST",
+      headers: buildHeaders(true),
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+
+    return await parseResponse(response, "asignar traductor");
+  } catch (error) {
+    console.error("Error asignando traductor", error);
+    throw error;
+  }
+}
+
+export async function asignarQuality(expedienteId, documentoId, payload) {
+  try {
+    const response = await fetch(`/api/expedientes/${expedienteId}/documentos/${documentoId}/traduccion/asignar-quality`, {
+      method: "POST",
+      headers: buildHeaders(true),
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+
+    return await parseResponse(response, "asignar quality");
+  } catch (error) {
+    console.error("Error asignando quality", error);
+    throw error;
+  }
+}
+
+export async function getMisAsignacionesTraductor(usuarioId) {
+  try {
+    const response = await fetch(`/api/traducciones/mis-asignaciones-traductor?usuario_id=${usuarioId}`, {
+      method: "GET",
+      headers: buildHeaders(),
+      credentials: "include",
+    });
+
+    const data = await parseResponse(response, "obtener mis asignaciones de traductor");
+    return data?.data ?? [];
+  } catch (error) {
+    console.error("Error consultando mis asignaciones de traductor", error);
+    return [];
+  }
+}
+
+export async function marcarIlegibleTraductor(expedienteId, documentoId, payload) {
+  try {
+    const response = await fetch(`/api/expedientes/${expedienteId}/documentos/${documentoId}/traduccion/marcar-ilegible`, {
+      method: "POST",
+      headers: buildHeaders(true),
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+
+    return await parseResponse(response, "marcar documento como ilegible");
+  } catch (error) {
+    console.error("Error marcando documento como ilegible", error);
+    throw error;
+  }
+}
+
+export async function enviarTraduccionQualityTraductor(expedienteId, documentoId, payload) {
+  try {
+    const response = await fetch(`/api/expedientes/${expedienteId}/documentos/${documentoId}/traduccion/enviar-quality`, {
+      method: "POST",
+      headers: buildHeaders(true),
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+
+    return await parseResponse(response, "enviar traducción a quality");
+  } catch (error) {
+    console.error("Error enviando traducción a quality", error);
+    throw error;
+  }
+}
+
 export { TRADUCCION_API_URL };
