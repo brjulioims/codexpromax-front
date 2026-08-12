@@ -70,14 +70,19 @@ function validateId(value, label) {
 
 function buildChecklistPayload(payload) {
   const usuario_id = Number(payload?.usuario_id);
-
   if (!Number.isFinite(usuario_id)) {
     throw new Error("usuario_id es obligatorio.");
   }
 
   return {
-    estado: `${payload?.estado ?? ""}`.trim(),
-    observaciones: `${payload?.observaciones ?? ""}`.trim(),
+    estado_diligenciamiento:
+      `${payload?.estado_diligenciamiento ?? payload?.estado ?? ""}`.trim() ||
+      undefined,
+    observaciones: `${payload?.observaciones ?? ""}`.trim() || undefined,
+    requiere_traduccion:
+      payload?.requiere_traduccion == null
+        ? undefined
+        : Boolean(payload.requiere_traduccion),
     usuario_id,
   };
 }
@@ -118,15 +123,21 @@ function buildRedaccionPayload(payload) {
 
 function buildTraduccionPayload(payload) {
   const usuario_id = Number(payload?.usuario_id);
-
   if (!Number.isFinite(usuario_id)) {
     throw new Error("usuario_id es obligatorio.");
   }
+  const checklist_item_id = payload?.checklist_item_id
+    ? Number(payload.checklist_item_id)
+    : null;
 
   return {
-    tipo_solicitud: `${payload?.tipo_solicitud ?? ""}`.trim(),
-    prioridad: `${payload?.prioridad ?? ""}`.trim(),
-    archivo_original_url: `${payload?.archivo_original_url ?? ""}`.trim(),
+    tipo_solicitud: `${payload?.tipo_solicitud ?? ""}`.trim() || undefined,
+    prioridad: `${payload?.prioridad ?? ""}`.trim() || undefined,
+    archivo_original_url:
+      `${payload?.archivo_original_url ?? ""}`.trim() || undefined,
+    observaciones:
+      `${payload?.observaciones ?? ""}`.trim() || undefined,
+    ...(checklist_item_id ? { checklist_item_id } : {}),
     usuario_id,
   };
 }
@@ -247,20 +258,20 @@ export async function getExpedienteChecklist(id) {
     return [];
   }
 }
-
 /**
  * HU-02
  * Actualiza el estado de un item del checklist.
  */
-export async function updateChecklistItem(itemId, payload) {
-  const checklistItemId = validateId(
-    itemId,
-    "El ID del item del checklist"
+export async function updateChecklistItem(expedienteId, itemId, payload) {
+  const validatedExpedienteId = validateId(
+    expedienteId,
+    "El ID del expediente"
   );
+  const checklistItemId = validateId(itemId, "El ID del item del checklist");
 
   try {
     const response = await fetch(
-      `${PARALEGAL_API_URL}/checklist/${checklistItemId}`,
+      `/api/expedientes/${validatedExpedienteId}/documentos/${checklistItemId}`,
       {
         method: "PATCH",
         headers: buildHeaders(true),
@@ -364,6 +375,50 @@ export async function solicitarTraduccion(id, payload) {
     );
   } catch (error) {
     console.error("Error solicitando ticket de traduccion", error);
+    throw error;
+  }
+}
+
+/**
+ * HU-03-bis
+ * Solicita ticket de Traduccion para un item especifico del checklist.
+ */
+export async function solicitarTraduccionChecklistItem(
+  expedienteId,
+  itemId,
+  payload
+) {
+  const expId = validateId(expedienteId, "El ID del expediente");
+  const chkId = validateId(itemId, "El ID del item del checklist");
+  const usuario_id = Number(payload?.usuario_id);
+
+  if (!Number.isFinite(usuario_id)) {
+    throw new Error("usuario_id es obligatorio.");
+  }
+
+  try {
+    const response = await fetch(
+      `/api/expedientes/${expId}/documentos/${chkId}/solicitar-traduccion`,
+      {
+        method: "POST",
+        headers: buildHeaders(true),
+        body: JSON.stringify({
+          usuario_id,
+          observaciones: `${payload?.observaciones ?? ""}`.trim() || undefined,
+        }),
+        credentials: "include",
+      }
+    );
+
+    return await parseResponse(
+      response,
+      "solicitar traduccion de item del checklist"
+    );
+  } catch (error) {
+    console.error(
+      "Error solicitando traduccion para item del checklist",
+      error
+    );
     throw error;
   }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -8,14 +9,19 @@ import {
   FileCheck,
   FilePenLine,
   FileText,
+  Languages,
   Loader2,
   Plus,
+  Send,
+  Settings2,
   Trash2,
   User,
   X,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
+import ModalGeneral from "../../../ui/ModalGeneral";
+import { solicitarTraduccionChecklistItem } from "../../../../services/paralegalServices";
 import {
   useCreateChecklistItemMutation,
   useCreateCustomChecklistItemMutation,
@@ -25,6 +31,7 @@ import {
 import { useExpedienteChecklistQuery } from "../../../../hooks/queries/useExpedienteChecklistQuery";
 import { usePlantillasChecklistQuery } from "../../../../hooks/queries/usePlantillasChecklistQuery";
 import { useMeQuery } from "../../../../hooks/queries/useMeQuery";
+import { queryKeys } from "../../../../utils/queryKeys";
 
 const ESTADOS = {
   RECIBIDO: "RECIBIDO",
@@ -212,6 +219,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
   const { data: plantillas = [], isLoading: plantillasCargando } =
     usePlantillasChecklistQuery();
 
+  const queryClient = useQueryClient();
   const { mutate: actualizarEstado, isPending: actualizando } =
     useUpdateChecklistItemMutation({
       onSuccess: () => {
@@ -220,6 +228,31 @@ export default function DocumentacionExpediente({ expediente = {} }) {
       onError: (err) => {
         console.error("Error actualizando documento:", err);
         toast.error(err?.message || "No se pudo actualizar el documento");
+      },
+    });
+
+  const { mutate: solicitarTraduccionItem, isPending: enviandoATraduccion } =
+    useMutation({
+      mutationFn: ({ itemId, prioridad, observaciones }) =>
+        solicitarTraduccionChecklistItem(expedienteId, itemId, {
+          prioridad: prioridad || "MEDIA",
+          observaciones: `${observaciones ?? ""}`.trim() || undefined,
+          usuario_id: usuarioId,
+        }),
+      onSuccess: () => {
+        toast.success(
+          "Solicitud de traducción creada correctamente — el ítem será marcado como EN_TRADUCCION."
+        );
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.expedienteChecklist.byExpediente(expedienteId),
+          exact: false,
+        });
+      },
+      onError: (err) => {
+        console.error("Error solicitando traducción del item:", err);
+        toast.error(
+          err?.message || "No se pudo enviar el documento a traducción."
+        );
       },
     });
 
@@ -236,11 +269,8 @@ export default function DocumentacionExpediente({ expediente = {} }) {
 
   const { mutate: crearItem, isPending: creandoItem } =
     useCreateChecklistItemMutation({
-      onSuccess: (data, vars) => {
+      onSuccess: () => {
         toast.success("Documento agregado correctamente");
-        const cat = vars?.categoriaId;
-        if (cat) setAgregandoPorCategoria((p) => ({ ...p, [cat]: false }));
-        if (cat) setSelectorPorCategoria((p) => ({ ...p, [cat]: "" }));
       },
       onError: (err) => {
         console.error("Error creando documento desde catalogo:", err);
@@ -252,12 +282,8 @@ export default function DocumentacionExpediente({ expediente = {} }) {
     mutate: crearItemPersonalizado,
     isPending: creandoItemPersonalizado,
   } = useCreateCustomChecklistItemMutation({
-    onSuccess: (data, vars) => {
+    onSuccess: () => {
       toast.success("Documento agregado correctamente");
-      const cat = vars?.categoriaId;
-      if (cat) setAgregandoPorCategoria((p) => ({ ...p, [cat]: false }));
-      if (cat) setSelectorPorCategoria((p) => ({ ...p, [cat]: "" }));
-      if (cat) setCustomNombrePorCategoria((p) => ({ ...p, [cat]: "" }));
     },
     onError: (err) => {
       console.error("Error creando documento personalizado:", err);
@@ -266,13 +292,34 @@ export default function DocumentacionExpediente({ expediente = {} }) {
   });
 
   const [openDropdownId, setOpenDropdownId] = useState(null);
-  const [observacionesEdit, setObservacionesEdit] = useState({});
-  const [editObsId, setEditObsId] = useState(null);
   const [dropdownPos, setDropdownPos] = useState({});
   const dropdownContenedorRef = useRef(null);
-  const [agregandoPorCategoria, setAgregandoPorCategoria] = useState({});
-  const [selectorPorCategoria, setSelectorPorCategoria] = useState({});
-  const [customNombrePorCategoria, setCustomNombrePorCategoria] = useState({});
+  const modalRef = useRef(null);
+  const modalEditarRef = useRef(null);
+  const [modalCategoriaId, setModalCategoriaId] = useState(null);
+  const [modalSelectValue, setModalSelectValue] = useState("");
+  const [modalCustomNombre, setModalCustomNombre] = useState("");
+  const [modalRequiereTraduccion, setModalRequiereTraduccion] = useState(false);
+  const [modalObservaciones, setModalObservaciones] = useState("");
+  const [modalEditarItemId, setModalEditarItemId] = useState(null);
+  const [modalEditarReqTrad, setModalEditarReqTrad] = useState(false);
+  const [modalEditarObs, setModalEditarObs] = useState("");
+
+  function abrirModalAgregar(categoriaId) {
+    setModalCategoriaId(categoriaId);
+    setModalSelectValue("");
+    setModalCustomNombre("");
+    setModalRequiereTraduccion(false);
+    setModalObservaciones("");
+  }
+
+  function cerrarModalAgregar() {
+    setModalCategoriaId(null);
+    setModalSelectValue("");
+    setModalCustomNombre("");
+    setModalRequiereTraduccion(false);
+    setModalObservaciones("");
+  }
 
   const categorias = useMemo(
     () =>
@@ -325,6 +372,19 @@ export default function DocumentacionExpediente({ expediente = {} }) {
       ),
     [checklistVisible]
   );
+
+  const opcionesModalPorCategoria = (() => {
+    const out = {};
+    categorias.forEach((categoria) => {
+      const plantillasDeCat = plantillasPorCategoria[categoria.id] ?? [];
+      out[categoria.id] = plantillasDeCat.filter((item) => {
+        const titulo = normalizarParaMatch(getPlantillaTitulo(item));
+        if (!titulo) return false;
+        return !plantillasTitulosYaUsados.has(titulo);
+      });
+    });
+    return out;
+  })();
 
   const resumen = useMemo(() => {
     const total = checklistVisible.length;
@@ -382,35 +442,37 @@ export default function DocumentacionExpediente({ expediente = {} }) {
       return;
     }
 
-    const seleccionado = selectorPorCategoria[categoria.id] || "";
-
+    const seleccionado = modalSelectValue || "";
     if (!seleccionado) {
       toast.error("Selecciona un documento antes de guardar");
       return;
     }
 
     if (seleccionado === "__otro__") {
-      const nombreDocumento = `${
-        customNombrePorCategoria[categoria.id] ?? ""
-      }`.trim();
-
+      const nombreDocumento = `${modalCustomNombre ?? ""}`.trim();
       if (!nombreDocumento) {
         toast.error("Escribe el nombre del documento");
         return;
       }
-
-      crearItemPersonalizado({
-        expedienteId,
-        categoriaId: categoria.id,
-        payload: {
-          categoria: mapCategoriaApi(categoria.id),
-          nombre_documento: nombreDocumento,
-          anexado_en_venta: false,
-          requiere_traduccion: false,
-          usuario_id: usuarioId,
+      crearItemPersonalizado(
+        {
+          expedienteId,
+          categoriaId: categoria.id,
+          payload: {
+            categoria: mapCategoriaApi(categoria.id),
+            nombre_documento: nombreDocumento,
+            anexado_en_venta: false,
+            requiere_traduccion: !!modalRequiereTraduccion,
+            observaciones: `${modalObservaciones ?? ""}`.trim() || undefined,
+            usuario_id: usuarioId,
+          },
         },
-      });
-
+        {
+          onSuccess: () => {
+            cerrarModalAgregar();
+          },
+        }
+      );
       return;
     }
 
@@ -419,22 +481,28 @@ export default function DocumentacionExpediente({ expediente = {} }) {
     const match = plantillasDeCategoria.find(
       (item) => String(getPlantillaId(item)) === selectedId
     );
-
     if (!match) {
       toast.error("No se pudo identificar el documento del catalogo");
       return;
     }
 
-    crearItem({
-      expedienteId,
-      categoriaId: categoria.id,
-      payload: {
-        plantilla_checklist_id: getPlantillaId(match),
-        requiere_traduccion: false,
-        observaciones: "Requisito seleccionado del catalogo",
-        usuario_id: usuarioId,
+    crearItem(
+      {
+        expedienteId,
+        categoriaId: categoria.id,
+        payload: {
+          plantilla_checklist_id: getPlantillaId(match),
+          requiere_traduccion: !!modalRequiereTraduccion,
+          observaciones: `${modalObservaciones ?? ""}`.trim() || undefined,
+          usuario_id: usuarioId,
+        },
       },
-    });
+      {
+        onSuccess: () => {
+          cerrarModalAgregar();
+        },
+      }
+    );
   }
 
   function eliminarDocumento(item) {
@@ -462,7 +530,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
       return;
     }
 
-    const obsActual = observacionesEdit[item.id] ?? item.observaciones ?? "";
+    const obsActual = item.observaciones ?? "";
 
     actualizarEstado({
       itemId: item.id,
@@ -477,7 +545,19 @@ export default function DocumentacionExpediente({ expediente = {} }) {
     setOpenDropdownId(null);
   }
 
-  function guardarObservaciones(item) {
+  function abrirModalEditar(item) {
+    setModalEditarItemId(item.id);
+    setModalEditarReqTrad(Boolean(item.requiere_traduccion));
+    setModalEditarObs(`${item.observaciones ?? ""}`);
+  }
+
+  function cerrarModalEditar() {
+    setModalEditarItemId(null);
+    setModalEditarReqTrad(false);
+    setModalEditarObs("");
+  }
+
+  function guardarModalEditar(item) {
     if (!usuarioId) {
       toast.error("No hay usuario autenticado para actualizar el documento");
       return;
@@ -489,18 +569,14 @@ export default function DocumentacionExpediente({ expediente = {} }) {
         expedienteId,
         payload: {
           estado: item.estado,
-          observaciones: observacionesEdit[item.id] ?? item.observaciones ?? "",
+          observaciones: `${modalEditarObs ?? ""}`.trim(),
+          requiere_traduccion: !!modalEditarReqTrad,
           usuario_id: usuarioId,
         },
       },
       {
         onSuccess: () => {
-          setObservacionesEdit((prev) => {
-            const next = { ...prev };
-            delete next[item.id];
-            return next;
-          });
-          setEditObsId(null);
+          cerrarModalEditar();
         },
       }
     );
@@ -518,7 +594,11 @@ export default function DocumentacionExpediente({ expediente = {} }) {
 
     const handleKey = (event) => {
       if (event.key === "Escape") {
-        setOpenDropdownId(null);
+        if (modalCategoriaId) {
+          cerrarModalAgregar();
+        } else {
+          setOpenDropdownId(null);
+        }
       }
     };
 
@@ -563,7 +643,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
       window.removeEventListener("resize", handlePosChange);
       window.removeEventListener("scroll", handlePosChange, true);
     };
-  }, [checklistVisible, openDropdownId]);
+  }, [checklistVisible, openDropdownId, modalCategoriaId]);
 
   if (!expedienteId) {
     return (
@@ -591,14 +671,10 @@ export default function DocumentacionExpediente({ expediente = {} }) {
             completados: 0,
             pct: 0,
           };
-          const agregando = !!agregandoPorCategoria[categoria.id];
-          const selectValue = selectorPorCategoria[categoria.id] || "";
           const plantillasDeCat = plantillasPorCategoria[categoria.id] ?? [];
-          const opcionesSelect = plantillasDeCat.filter((item) => {
+          const _opcionesSelect = plantillasDeCat.filter((item) => {
             const titulo = normalizarParaMatch(getPlantillaTitulo(item));
-
             if (!titulo) return false;
-
             return !plantillasTitulosYaUsados.has(titulo);
           });
 
@@ -641,167 +717,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                     </div>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAgregandoPorCategoria((prev) => ({
-                      ...prev,
-                      [categoria.id]: !prev[categoria.id],
-                    }));
-
-                    if (!agregando) {
-                      setSelectorPorCategoria((prev) => ({
-                        ...prev,
-                        [categoria.id]: "",
-                      }));
-                      setCustomNombrePorCategoria((prev) => ({
-                        ...prev,
-                        [categoria.id]: "",
-                      }));
-                    }
-                  }}
-                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide transition sm:px-3 sm:py-2 sm:text-[11px] ${
-                    agregando
-                      ? "border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                      : "border-transparent text-white hover:brightness-110"
-                  }`}
-                  style={agregando ? undefined : { backgroundColor: categoria.color.accent }}
-                >
-                  {agregando ? (
-                    <>
-                      <X size={11} />
-                      Cancelar
-                    </>
-                  ) : (
-                    <>
-                      <Plus size={11} />
-                      Agregar
-                    </>
-                  )}
-                </button>
               </header>
-
-              {agregando ? (
-                <div className="border-b border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-900/50">
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <p
-                      className={`text-[10px] font-bold uppercase tracking-wider ${categoria.color.head}`}
-                    >
-                      Agregar requisito - {categoria.titulo}
-                    </p>
-                    {plantillasCargando ? (
-                      <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                        <Loader2 size={10} className="animate-spin" />
-                        Cargando plantillas...
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <label className="block">
-                    <span className="mb-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                      Selecciona el titulo del requisito
-                    </span>
-                    <select
-                      value={selectValue}
-                      onChange={(event) =>
-                        setSelectorPorCategoria((prev) => ({
-                          ...prev,
-                          [categoria.id]: event.target.value,
-                        }))
-                      }
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-[12px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                    >
-                      <option value="">- Sin seleccionar -</option>
-                      {opcionesSelect.length ? (
-                        <optgroup label="Plantillas disponibles">
-                          {opcionesSelect.map((item) => {
-                            const id = getPlantillaId(item);
-                            const titulo = getPlantillaTitulo(item);
-
-                            return (
-                              <option
-                                key={`${categoria.id}-pl-${id ?? titulo}`}
-                                value={id ? `__id__:${id}` : titulo}
-                              >
-                                {titulo}
-                              </option>
-                            );
-                          })}
-                          <option value="__otro__">Otro</option>
-                        </optgroup>
-                      ) : (
-                        <>
-                          <option disabled value="">
-                            No hay plantillas disponibles para esta categoria
-                          </option>
-                          <option value="__otro__">Otro</option>
-                        </>
-                      )}
-                    </select>
-                  </label>
-
-                  {selectValue === "__otro__" ? (
-                    <label className="mt-3 block">
-                      <span className="mb-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                        Nombre del documento
-                      </span>
-                      <input
-                        type="text"
-                        value={customNombrePorCategoria[categoria.id] || ""}
-                        onChange={(event) =>
-                          setCustomNombrePorCategoria((prev) => ({
-                            ...prev,
-                            [categoria.id]: event.target.value,
-                          }))
-                        }
-                        placeholder="Escribe el documento"
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-[12px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                      />
-                    </label>
-                  ) : null}
-
-                  <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAgregandoPorCategoria((prev) => ({
-                          ...prev,
-                          [categoria.id]: false,
-                        }));
-                        setSelectorPorCategoria((prev) => ({
-                          ...prev,
-                          [categoria.id]: "",
-                        }));
-                        setCustomNombrePorCategoria((prev) => ({
-                          ...prev,
-                          [categoria.id]: "",
-                        }));
-                      }}
-                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => confirmarAgregar(categoria)}
-                      disabled={
-                        (creandoItem || creandoItemPersonalizado) ||
-                        !selectValue
-                      }
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#0d1b5e] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {creandoItem || creandoItemPersonalizado ? (
-                        <Loader2 size={12} className="animate-spin" />
-                      ) : (
-                        <Plus size={12} />
-                      )}
-                      {creandoItem || creandoItemPersonalizado
-                        ? "Guardando..."
-                        : "Guardar"}
-                    </button>
-                  </div>
-                </div>
-              ) : null}
 
               <div className="flex flex-1 flex-col gap-3 p-4">
                 {isLoading && !items.length ? (
@@ -822,145 +738,126 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                     ))}
                   </div>
                 ) : items.length ? (
-                  items.map((item) => {
-                    const style = getEstadoStyle(item.estado);
-                    const IconComp = style.icon;
-                    const isDropdownOpen = openDropdownId === item.id;
-                    const isEditingObs = editObsId === item.id;
-                    const obsValue =
-                      observacionesEdit[item.id] ?? item.observaciones ?? "";
+                  <>
+                    {items.map((item) => {
+                      const style = getEstadoStyle(item.estado);
+                      const IconComp = style.icon;
+                      const isDropdownOpen = openDropdownId === item.id;
+                      const requiereTraduccion = Boolean(item.requiere_traduccion);
+                      const puedeEnviarTraduccion =
+                        requiereTraduccion &&
+                        !enviandoATraduccion &&
+                        item.estado !== ESTADOS.EN_TRADUCCION &&
+                        item.estado !== ESTADOS.TRADUCIDO &&
+                        item.estado !== ESTADOS.EN_QUALITY_TRADUCCION;
 
-                    return (
-                      <div
-                        key={item.id}
-                        className={`${
-                          isDropdownOpen || isEditingObs ? "z-40" : "z-0"
-                        } relative rounded-xl p-4 transition-all duration-300 hover:shadow-md ${style.container}`}
-                      >
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${style.iconBox}`}
-                            >
-                              <IconComp size={18} />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <h4
-                                className={`text-[14px] font-semibold leading-5 ${style.title}`}
+                      return (
+                        <div
+                          key={item.id}
+                          className={`${
+                            isDropdownOpen ? "z-40" : "z-0"
+                          } relative rounded-xl p-4 transition-all duration-300 hover:shadow-md ${style.container}`}
+                        >
+                          <div className="flex flex-col gap-3">
+                            <div className="flex items-start gap-3">
+                              <div
+                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${style.iconBox}`}
                               >
-                                {item.titulo_requisito}
-                              </h4>
+                                <IconComp size={18} />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <h4
+                                    className={`min-w-0 truncate text-[14px] font-semibold leading-5 ${style.title}`}
+                                  >
+                                    {item.titulo_requisito}
+                                  </h4>
+                                </div>
 
-                              <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                                <div className="relative">
+                                <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                                  <div className="relative">
+                                    <button
+                                      type="button"
+                                      data-estado-selector-id={item.id}
+                                      disabled={actualizando}
+                                      onClick={() =>
+                                        setOpenDropdownId(
+                                          isDropdownOpen ? null : item.id
+                                        )
+                                      }
+                                      className={`inline-flex items-center gap-1.5 transition ${getSelectEstadoStyle(
+                                        item.estado
+                                      )} ${
+                                        actualizando
+                                          ? "opacity-60"
+                                          : "hover:brightness-110"
+                                      }`}
+                                    >
+                                      {actualizando ? (
+                                        <Loader2
+                                          size={12}
+                                          className="animate-spin"
+                                        />
+                                      ) : (
+                                        <span
+                                          className={`h-1.5 w-1.5 rounded-full ${style.dot}`}
+                                        />
+                                      )}
+                                      {formatEstadoLabel(item.estado)}
+                                      <ChevronDown
+                                        size={12}
+                                        className={`transition-transform ${
+                                          isDropdownOpen ? "rotate-180" : ""
+                                        }`}
+                                      />
+                                    </button>
+                                  </div>
+
+                                  {requiereTraduccion ? (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        solicitarTraduccionItem({
+                                          itemId: item.id,
+                                          prioridad: "MEDIA",
+                                          observaciones: `Solicitud de traducción para: ${item.titulo_requisito}`,
+                                        })
+                                      }
+                                      disabled={!puedeEnviarTraduccion}
+                                      className="inline-flex items-center gap-1.5 rounded-lg border border-sky-500 bg-sky-500 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-sky-600 dark:bg-sky-600 dark:hover:bg-sky-500"
+                                    >
+                                      {enviandoATraduccion ? (
+                                        <Loader2
+                                          size={11}
+                                          className="animate-spin"
+                                        />
+                                      ) : (
+                                        <Languages size={11} />
+                                      )}
+                                      {enviandoATraduccion
+                                        ? "Enviando..."
+                                        : "Enviar a Traducción"}
+                                    </button>
+                                  ) : null}
+
                                   <button
                                     type="button"
-                                    data-estado-selector-id={item.id}
-                                    disabled={actualizando}
-                                    onClick={() =>
-                                      setOpenDropdownId(
-                                        isDropdownOpen ? null : item.id
-                                      )
-                                    }
-                                    className={`inline-flex items-center gap-1.5 transition ${getSelectEstadoStyle(
-                                      item.estado
-                                    )} ${
-                                      actualizando
-                                        ? "opacity-60"
-                                        : "hover:brightness-110"
-                                    }`}
+                                    onClick={() => abrirModalEditar(item)}
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 transition hover:border-[#0d1b5e] hover:text-[#0d1b5e] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                                   >
-                                    {actualizando ? (
-                                      <Loader2
-                                        size={12}
-                                        className="animate-spin"
-                                      />
-                                    ) : (
-                                      <span
-                                        className={`h-1.5 w-1.5 rounded-full ${style.dot}`}
-                                      />
-                                    )}
-                                    {formatEstadoLabel(item.estado)}
-                                    <ChevronDown
-                                      size={12}
-                                      className={`transition-transform ${
-                                        isDropdownOpen ? "rotate-180" : ""
-                                      }`}
-                                    />
+                                    <Settings2 size={11} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => eliminarDocumento(item)}
+                                    disabled={eliminandoItem}
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-red-600 transition hover:border-red-400 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/50 dark:bg-slate-900 dark:text-red-300"
+                                  >
+                                    <Trash2 size={11} />
                                   </button>
                                 </div>
 
-                                {isEditingObs ? (
-                                  <div className="flex w-full items-center gap-2 sm:w-[260px] sm:flex-1">
-                                    <input
-                                      type="text"
-                                      value={obsValue}
-                                      onChange={(event) =>
-                                        setObservacionesEdit((prev) => ({
-                                          ...prev,
-                                          [item.id]: event.target.value,
-                                        }))
-                                      }
-                                      placeholder="Agregar observaciones..."
-                                      className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                                      autoFocus
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => guardarObservaciones(item)}
-                                      className="inline-flex items-center gap-1 rounded-lg bg-[#0d1b5e] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white transition hover:brightness-110"
-                                    >
-                                      Guardar
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setEditObsId(null);
-                                        setObservacionesEdit((prev) => {
-                                          const next = { ...prev };
-                                          delete next[item.id];
-                                          return next;
-                                        });
-                                      }}
-                                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-                                    >
-                                      Cancelar
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setObservacionesEdit((prev) => ({
-                                          ...prev,
-                                          [item.id]:
-                                            item.observaciones ?? "",
-                                        }));
-                                        setEditObsId(item.id);
-                                      }}
-                                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 transition hover:border-[#0d1b5e] hover:text-[#0d1b5e] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                                    >
-                                      <FilePenLine size={11} />
-                                      {item.observaciones
-                                        ? "Editar nota"
-                                        : "Agregar nota"}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => eliminarDocumento(item)}
-                                      disabled={eliminandoItem}
-                                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-red-600 transition hover:border-red-400 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/50 dark:bg-slate-900 dark:text-red-300"
-                                    >
-                                      <Trash2 size={11} />
-                                      Eliminar
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-
-                              {!isEditingObs &&
-                                (item.observaciones ? (
+                                {item.observaciones ? (
                                   <p
                                     className={`mt-2 text-[11px] leading-5 ${style.meta}`}
                                   >
@@ -972,37 +869,50 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                                   >
                                     Sin observaciones registradas
                                   </p>
-                                ) : null)}
+                                ) : null}
 
-                              <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-500 dark:text-slate-400">
-                                {item.usuario_actualizador ? (
-                                  <div className="flex items-center gap-1.5">
-                                    <User size={11} />
-                                    <span className="font-medium">
-                                      {item.usuario_actualizador}
-                                    </span>
-                                  </div>
-                                ) : null}
-                                {item.updated_at ? (
-                                  <div className="flex items-center gap-1.5">
-                                    <Clock size={11} />
-                                    <span>
-                                      Actualizado:{" "}
-                                      <span className="font-semibold">
-                                        {item.updated_at}
+                                <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-500 dark:text-slate-400">
+                                  {item.usuario_actualizador ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <User size={11} />
+                                      <span className="font-medium">
+                                        {item.usuario_actualizador}
                                       </span>
-                                    </span>
-                                  </div>
-                                ) : null}
+                                    </div>
+                                  ) : null}
+                                  {item.updated_at ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <Clock size={11} />
+                                      <span>
+                                        Actualizado:{" "}
+                                        <span className="font-semibold">
+                                          {item.updated_at}
+                                        </span>
+                                      </span>
+                                    </div>
+                                  ) : null}
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => abrirModalAgregar(categoria.id)}
+                      className={`mt-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-dashed px-3 py-2 text-[11px] font-bold uppercase tracking-wide transition ${categoria.color.badge} ${categoria.color.darkBadge} hover:brightness-105`}
+                    >
+                      <Plus size={12} />
+                      Agregar requisito
+                    </button>
+                  </>
                 ) : (
-                  <div className="mt-1 flex flex-1 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center dark:border-slate-800 dark:bg-slate-900/30">
+                  <button
+                    type="button"
+                    onClick={() => abrirModalAgregar(categoria.id)}
+                    className="mt-1 flex flex-1 cursor-pointer items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center transition hover:border-slate-400 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/30 dark:hover:bg-slate-900/60"
+                  >
                     <div>
                       <div
                         className={`mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl border ${categoria.color.badge} ${categoria.color.darkBadge}`}
@@ -1013,11 +923,11 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                         Sin requisitos
                       </p>
                       <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
-                        Presiona "Agregar" para incluir documentacion en esta
+                        Presiona aqui para agregar el primer requisito en esta
                         categoria
                       </p>
                     </div>
-                  </div>
+                  </button>
                 )}
               </div>
             </section>
@@ -1090,6 +1000,267 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                 </ul>
               </div>,
               document.body
+            );
+          })()
+        : null}
+
+      {modalCategoriaId
+        ? (() => {
+            const categoriaModal = categorias.find(
+              (c) => c.id === modalCategoriaId
+            );
+            if (!categoriaModal) return null;
+            const IconCat = categoriaModal.icon;
+            const opcionesSelect =
+              opcionesModalPorCategoria[modalCategoriaId] ?? [];
+            const disabledGuardar =
+              creandoItem ||
+              creandoItemPersonalizado ||
+              !modalSelectValue ||
+              (modalSelectValue === "__otro__" &&
+                !`${modalCustomNombre}`.trim());
+
+            return (
+              <ModalGeneral
+                ref={modalRef}
+                open
+                onClose={cerrarModalAgregar}
+                header={
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${categoriaModal.color.badge} ${categoriaModal.color.darkBadge}`}
+                    >
+                      <IconCat size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <p
+                        className={`text-[10px] font-bold uppercase tracking-wider ${categoriaModal.color.head}`}
+                      >
+                        Agregar requisito
+                      </p>
+                      <h2 className="mt-0.5 truncate text-[15px] font-bold text-slate-800 dark:text-slate-100 sm:text-[16px]">
+                        {categoriaModal.titulo}
+                      </h2>
+                    </div>
+                  </div>
+                }
+                headerClassName={`${categoriaModal.color.cardAccent}`}
+                size="md"
+                zIndex={10000}
+                footer={
+                  <>
+                    <button
+                      type="button"
+                      onClick={cerrarModalAgregar}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => confirmarAgregar(categoriaModal)}
+                      disabled={disabledGuardar}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#0d1b5e] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {creandoItem || creandoItemPersonalizado ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Plus size={12} />
+                      )}
+                      {creandoItem || creandoItemPersonalizado
+                        ? "Guardando..."
+                        : "Guardar"}
+                    </button>
+                  </>
+                }
+              >
+                <div className="space-y-4">
+                  {plantillasCargando ? (
+                    <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-[11px] text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
+                      <Loader2 size={12} className="animate-spin" />
+                      Cargando plantillas disponibles...
+                    </div>
+                  ) : null}
+
+                  <label className="block">
+                    <span className="mb-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                      Selecciona el titulo del requisito
+                    </span>
+                    <select
+                      value={modalSelectValue}
+                      onChange={(e) => {
+                        setModalSelectValue(e.target.value);
+                        if (e.target.value !== "__otro__")
+                          setModalCustomNombre("");
+                      }}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-[12px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    >
+                      <option value="">- Sin seleccionar -</option>
+                      {opcionesSelect.length ? (
+                        <optgroup label="Plantillas disponibles">
+                          {opcionesSelect.map((item) => {
+                            const id = getPlantillaId(item);
+                            const titulo = getPlantillaTitulo(item);
+                            return (
+                              <option
+                                key={`modal-pl-${id ?? titulo}`}
+                                value={id ? `__id__:${id}` : titulo}
+                              >
+                                {titulo}
+                              </option>
+                            );
+                          })}
+                          <option value="__otro__">Otro (personalizado)</option>
+                        </optgroup>
+                      ) : (
+                        <>
+                          <option disabled value="">
+                            No hay plantillas disponibles para esta categoria
+                          </option>
+                          <option value="__otro__">Otro (personalizado)</option>
+                        </>
+                      )}
+                    </select>
+                  </label>
+
+                  {modalSelectValue === "__otro__" ? (
+                    <label className="block">
+                      <span className="mb-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                        Nombre del documento
+                      </span>
+                      <input
+                        type="text"
+                        value={modalCustomNombre}
+                        onChange={(e) =>
+                          setModalCustomNombre(e.target.value)
+                        }
+                        placeholder="Escribe el nombre del documento"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-[12px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                        autoFocus
+                      />
+                    </label>
+                  ) : null}
+
+                  <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-slate-200 bg-white/50 p-3 transition hover:border-[#0d1b5e]/40 hover:bg-[#0d1b5e]/5 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-[#0d1b5e]/60 dark:hover:bg-[#0d1b5e]/10">
+                    <input
+                      type="checkbox"
+                      checked={modalRequiereTraduccion}
+                      onChange={(e) =>
+                        setModalRequiereTraduccion(e.target.checked)
+                      }
+                      className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-[#0d1b5e] focus:ring-[#0d1b5e]/30 dark:border-slate-700"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+                        ¿Documento requiere traducción?
+                      </p>
+                      <p className="mt-0.5 text-[10px] leading-4 text-slate-500 dark:text-slate-400">
+                        Si lo marcas, después de guardar podrás enviar este
+                        documento a traducción desde la tarjeta.
+                      </p>
+                    </div>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                      Observaciones
+                    </span>
+                    <textarea
+                      rows={3}
+                      value={modalObservaciones}
+                      onChange={(e) => setModalObservaciones(e.target.value)}
+                      placeholder="Información adicional del requisito (opcional)"
+                      className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-[12px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    />
+                  </label>
+                </div>
+              </ModalGeneral>
+            );
+          })()
+        : null}
+
+      {modalEditarItemId
+        ? (() => {
+            const itemEditando = checklistVisible.find(
+              (it) => String(it.id) === String(modalEditarItemId)
+            );
+            if (!itemEditando) return null;
+
+            return (
+              <ModalGeneral
+                ref={modalEditarRef}
+                open
+                onClose={cerrarModalEditar}
+                header={
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#0d1b5e]">
+                      Editar documento
+                    </p>
+                    <h2 className="mt-0.5 truncate text-[15px] font-bold text-slate-800 dark:text-slate-100 sm:text-[16px]">
+                      {itemEditando.titulo_requisito}
+                    </h2>
+                  </div>
+                }
+                size="md"
+                zIndex={10000}
+                footer={
+                  <>
+                    <button
+                      type="button"
+                      onClick={cerrarModalEditar}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => guardarModalEditar(itemEditando)}
+                      disabled={actualizando}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#0d1b5e] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {actualizando ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : null}
+                      {actualizando ? "Guardando..." : "Guardar cambios"}
+                    </button>
+                  </>
+                }
+              >
+                <div className="space-y-4">
+                  <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-slate-200 bg-white/50 p-3 transition hover:border-[#0d1b5e]/40 hover:bg-[#0d1b5e]/5 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-[#0d1b5e]/60 dark:hover:bg-[#0d1b5e]/10">
+                    <input
+                      type="checkbox"
+                      checked={modalEditarReqTrad}
+                      onChange={(e) =>
+                        setModalEditarReqTrad(e.target.checked)
+                      }
+                      className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-[#0d1b5e] focus:ring-[#0d1b5e]/30 dark:border-slate-700"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+                        ¿Documento requiere traducción?
+                      </p>
+                      <p className="mt-0.5 text-[10px] leading-4 text-slate-500 dark:text-slate-400">
+                        Actívalo para poder enviar este documento a traducción
+                        después.
+                      </p>
+                    </div>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                      Observaciones
+                    </span>
+                    <textarea
+                      rows={3}
+                      value={modalEditarObs}
+                      onChange={(e) => setModalEditarObs(e.target.value)}
+                      placeholder="Información adicional del requisito (opcional)"
+                      className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-[12px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    />
+                  </label>
+                </div>
+              </ModalGeneral>
             );
           })()
         : null}
