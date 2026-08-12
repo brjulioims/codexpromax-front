@@ -465,4 +465,110 @@ export async function getExpedienteHistorial(id) {
   }
 }
 
+/**
+ * Obtiene el listado dinámico de documentos de un expediente.
+ */
+export async function getExpedienteDocumentos(id) {
+  let expedienteId;
+
+  try {
+    expedienteId = validateId(
+      id,
+      "El ID del expediente"
+    );
+  } catch {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `${EXPEDIENTES_API_URL}/${expedienteId}/documentos`,
+      {
+        method: "GET",
+        headers: buildHeaders(),
+        credentials: "include",
+      }
+    );
+
+    const data = await parseResponse(
+      response,
+      "obtener documentos del expediente"
+    );
+
+    return data?.data ?? data;
+  } catch (error) {
+    console.error(
+      "Error consultando documentos del expediente",
+      error
+    );
+
+    return null;
+  }
+}
+
+export async function createExpedienteDocumento(id, payload) {
+  const expedienteId = validateId(
+    id,
+    "El ID del expediente"
+  );
+
+  try {
+    const response = await fetch(
+      `${EXPEDIENTES_API_URL}/${expedienteId}/documentos`,
+      {
+        method: "POST",
+        headers: buildHeaders(true),
+        body: JSON.stringify(payload),
+        credentials: "include",
+      }
+    );
+
+    return await parseResponse(
+      response,
+      "agregar documento personalizado al expediente"
+    );
+  } catch (error) {
+    console.error(
+      "Error agregando documento personalizado al expediente",
+      error
+    );
+
+    throw error;
+  }
+}
+
+export async function deleteExpedienteDocumento(id, docId) {
+  const expedienteId = validateId(
+    id,
+    "El ID del expediente"
+  );
+  const documentoId = validateId(
+    docId,
+    "El ID del documento"
+  );
+
+  try {
+    const response = await fetch(
+      `${EXPEDIENTES_API_URL}/${expedienteId}/documentos/${documentoId}`,
+      {
+        method: "DELETE",
+        headers: buildHeaders(),
+        credentials: "include",
+      }
+    );
+
+    return await parseResponse(
+      response,
+      "eliminar documento del expediente"
+    );
+  } catch (error) {
+    console.error(
+      "Error eliminando documento del expediente",
+      error
+    );
+
+    throw error;
+  }
+}
+
 export { EXPEDIENTES_API_URL };

@@ -82,6 +82,25 @@ function buildChecklistPayload(payload) {
   };
 }
 
+function buildChecklistCreatePayload(payload) {
+  const usuario_id = Number(payload?.usuario_id);
+
+  if (!Number.isFinite(usuario_id)) {
+    throw new Error("usuario_id es obligatorio.");
+  }
+
+  return {
+    catalogo_documento_id:
+      payload?.plantilla_checklist_id == null ||
+      `${payload.plantilla_checklist_id}`.trim() === ""
+        ? null
+        : Number(payload.plantilla_checklist_id),
+    requiere_traduccion: Boolean(payload?.requiere_traduccion),
+    observaciones: `${payload?.observaciones ?? ""}`.trim(),
+    usuario_id,
+  };
+}
+
 function buildRedaccionPayload(payload) {
   const usuario_id = Number(payload?.usuario_id);
 
@@ -256,6 +275,40 @@ export async function updateChecklistItem(itemId, payload) {
     );
   } catch (error) {
     console.error("Error actualizando item del checklist", error);
+    throw error;
+  }
+}
+
+/**
+ * HU-02
+ * Crea un item del checklist para un expediente.
+ */
+export async function createChecklistItem(expedienteId, payload) {
+  const validatedExpedienteId = validateId(
+    expedienteId,
+    "El ID del expediente"
+  );
+
+  try {
+    const response = await fetch(
+      `/api/expedientes/${validatedExpedienteId}/documentos/desde-catalogo`,
+      {
+        method: "POST",
+        headers: buildHeaders(true),
+        body: JSON.stringify(buildChecklistCreatePayload(payload)),
+        credentials: "include",
+      }
+    );
+
+    return await parseResponse(
+      response,
+      "agregar documento del catalogo al expediente"
+    );
+  } catch (error) {
+    console.error(
+      "Error agregando documento del catalogo al expediente",
+      error
+    );
     throw error;
   }
 }
