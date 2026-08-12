@@ -101,29 +101,10 @@ export default function DetalleExpediente() {
     calculoAvanceChecklist === undefined
       ? null
       : calculoAvanceChecklist ?? fallbackAvance;
-  const avanceCargando = calculoAvanceChecklist === undefined;
+  const _avanceCargando = calculoAvanceChecklist === undefined;
   const avanceValido = avanceResultado !== null;
-  const avancePorcentaje = avanceValido ? avanceResultado.pct : 0;
+  const _avancePorcentaje = avanceValido ? avanceResultado.pct : 0;
 
-  const getProgresoColor = (pct) => {
-    if (pct < 34) return {
-      bar: "bg-orange-500 dark:bg-orange-400",
-      badge: "bg-orange-50 text-orange-600 dark:bg-orange-500/20 dark:text-orange-300",
-      ring: "ring-orange-500/20 dark:ring-orange-400/30",
-    };
-    if (pct < 67) return {
-      bar: "bg-[#0d1b5e] dark:bg-blue-700",
-      badge: "bg-[#0d1b5e]/10 text-[#0d1b5e] dark:bg-blue-800/40 dark:text-blue-200",
-      ring: "ring-[#0d1b5e]/20 dark:ring-blue-700/40",
-    };
-    return {
-      bar: "bg-emerald-600 dark:bg-emerald-500",
-      badge: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300",
-      ring: "ring-emerald-500/20 dark:ring-emerald-400/30",
-    };
-  };
-
-  const colores = avanceValido ? getProgresoColor(avancePorcentaje) : null;
 
   return (
     <section className="w-full space-y-5">
@@ -203,125 +184,6 @@ export default function DetalleExpediente() {
                   ))}
                 </div>
               ))}
-            </div>
-
-            <div className="px-8 pb-8 pt-2">
-              <div className={`rounded-2xl border p-6 transition-all duration-300 ${
-                avanceCargando
-                  ? "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60"
-                  : avanceValido
-                    ? `border-slate-200 bg-[#f8f9fb] ring-1 ${colores.ring} dark:border-slate-800 dark:bg-slate-900/60`
-                    : "border-dashed border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
-              }`}>
-                {avanceCargando ? (
-                  <div className="flex flex-col gap-5 animate-pulse lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className="h-14 w-14 shrink-0 rounded-xl bg-slate-200 dark:bg-slate-800" />
-                      <div className="min-w-0 flex-1 space-y-2.5">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <div className="h-3 w-36 rounded-md bg-slate-200 dark:bg-slate-800" />
-                          <div className="h-6 w-16 rounded-lg bg-slate-200 dark:bg-slate-800" />
-                          <div className="h-5 w-24 rounded-lg bg-slate-200/70 dark:bg-slate-800/70" />
-                        </div>
-                        <div className="h-5 w-72 rounded bg-slate-200 dark:bg-slate-800" />
-                      </div>
-                    </div>
-                    <div className="w-full max-w-sm space-y-2 lg:ml-8 lg:flex-1">
-                      <div className="flex items-end justify-between">
-                        <div className="h-3 w-6 rounded bg-slate-200 dark:bg-slate-800" />
-                        <div className="h-3 w-8 rounded bg-slate-200 dark:bg-slate-800" />
-                        <div className="h-3 w-10 rounded bg-slate-200 dark:bg-slate-800" />
-                      </div>
-                      <div className="h-4 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-slate-800" />
-                      <div className="flex items-center justify-between pt-1">
-                        <div className="h-3 w-44 rounded bg-slate-200 dark:bg-slate-800" />
-                        <div className="h-3 w-24 rounded bg-slate-200/80 dark:bg-slate-800" />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex items-start gap-4">
-                    <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${
-                      avanceValido ? colores.bar : "bg-slate-200 dark:bg-slate-800"
-                    }`}>
-                      <FileCheck size={26} className={avanceValido ? "text-white" : "text-slate-400 dark:text-slate-500"} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#8da2ce] dark:text-blue-300/70">
-                          Avance Documental
-                        </p>
-                        {avanceValido && (
-                          <span className={`inline-flex items-center rounded-lg px-3 py-1 text-[12px] font-bold ${colores.badge}`}>
-                            {avancePorcentaje.toFixed(2)}%
-                          </span>
-                        )}
-                        {avanceResultado?.desdeChecklist && (
-                          <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#0d1b5e]/20 bg-[#0d1b5e]/5 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#0d1b5e] dark:border-blue-700/40 dark:bg-blue-800/30 dark:text-blue-200">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[#0d1b5e] dark:bg-blue-300" />
-                            Sincronizado
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-2 text-[15px] font-medium text-[#0e183f] dark:text-slate-100">
-                        {avanceValido
-                          ? avanceResultado?.desdeChecklist && avanceResultado?.total !== undefined
-                            ? `${avanceResultado.completados ?? avanceResultado.recibidos} de ${avanceResultado.total} documentos completados`
-                            : `${avancePorcentaje.toFixed(2)}% completado`
-                          : "No registrado"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {avanceValido ? (
-                    <div className="w-full max-w-sm lg:ml-8 lg:flex-1">
-                      <div className="flex items-end justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        <span>0%</span>
-                        <span>50%</span>
-                        <span>100%</span>
-                      </div>
-                      <div className="relative mt-2 h-4 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-slate-800">
-                        <div
-                          className={`h-full rounded-full transition-all duration-700 ease-out ${colores.bar}`}
-                          style={{ width: `${avancePorcentaje}%` }}
-                        />
-                      </div>
-                      <div className="mt-2 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                          <span className={`h-2 w-2 rounded-full ${colores.bar}`} />
-                          <span className="font-medium">
-                              Estado:{" "}
-                              <span className={
-                                avancePorcentaje < 34
-                                  ? "text-orange-600 dark:text-orange-300"
-                                  : avancePorcentaje < 67
-                                    ? "text-[#0d1b5e] dark:text-blue-200"
-                                    : avancePorcentaje < 100
-                                      ? "text-emerald-700 dark:text-emerald-300"
-                                      : "text-emerald-700 dark:text-emerald-300"
-                              }>
-                                {avancePorcentaje < 34
-                                  ? "En progreso inicial"
-                                  : avancePorcentaje < 67
-                                    ? "En desarrollo"
-                                    : avancePorcentaje < 100
-                                      ? "Casi completo"
-                                      : "Completado"}
-                              </span>
-                            </span>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="w-full max-w-sm lg:ml-8 lg:flex-1">
-                      <div className="h-4 w-full overflow-hidden rounded-full bg-slate-200/60 dark:bg-slate-800/60" />
-                      <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">Sin datos de progreso</p>
-                    </div>
-                  )}
-                </div>
-                )}
-              </div>
             </div>
           </>
         ) : (
