@@ -47,7 +47,8 @@ export function useUpdateChecklistItemMutation(options = {}) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ itemId, payload }) => updateChecklistItem(itemId, payload),
+    mutationFn: ({ expedienteId, itemId, payload }) =>
+      updateChecklistItem(expedienteId, itemId, payload),
     onSuccess: (data, variables, context) => {
       const expedienteId =
         variables?.expedienteId ??
