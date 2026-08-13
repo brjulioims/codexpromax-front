@@ -4,7 +4,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   CheckCircle2,
-  ChevronDown,
   Clock,
   FileCheck,
   FilePenLine,
@@ -12,16 +11,16 @@ import {
   Languages,
   Loader2,
   Plus,
-  Send,
   Settings2,
   Trash2,
   User,
   X,
+  AlertCircle,
+  Save,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import ModalGeneral from "../../../ui/ModalGeneral";
-import { solicitarTraduccionChecklistItem } from "../../../../services/paralegalServices";
 import {
   useCreateChecklistItemMutation,
   useCreateCustomChecklistItemMutation,
@@ -73,7 +72,7 @@ const CATEGORIA_META = {
     color: {
       badge: "bg-blue-50 text-[#0d1b5e] border-[#0d1b5e]/20",
       ring: "ring-[#0d1b5e]/10",
-      head: "text-[#0d1b5e]",
+      head: "text-[#0d1b5e] dark:text-blue-200",
       accent: "#0d1b5e",
       darkBadge:
         "dark:bg-blue-950/50 dark:text-blue-200 dark:border-blue-900/50",
@@ -86,7 +85,7 @@ const CATEGORIA_META = {
     color: {
       badge: "bg-emerald-50 text-emerald-800 border-emerald-200",
       ring: "ring-emerald-500/10",
-      head: "text-emerald-700",
+      head: "text-emerald-700 dark:text-emerald-200",
       accent: "#047857",
       darkBadge:
         "dark:bg-emerald-950/40 dark:text-emerald-200 dark:border-emerald-900/50",
@@ -99,7 +98,7 @@ const CATEGORIA_META = {
     color: {
       badge: "bg-orange-50 text-orange-800 border-orange-200",
       ring: "ring-orange-500/10",
-      head: "text-orange-700",
+      head: "text-orange-700 dark:text-orange-200",
       accent: "#c2410c",
       darkBadge:
         "dark:bg-orange-950/40 dark:text-orange-200 dark:border-orange-900/50",
@@ -231,7 +230,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
       },
     });
 
-  const { mutate: solicitarTraduccionItem, isPending: enviandoATraduccion } =
+  const { mutate: solicitarTraduccionChecklistItem, isPending: enviandoATraduccion } =
     useMutation({
       mutationFn: ({ itemId, prioridad, observaciones }) =>
         solicitarTraduccionChecklistItem(expedienteId, itemId, {
@@ -304,6 +303,37 @@ export default function DocumentacionExpediente({ expediente = {} }) {
   const [modalEditarItemId, setModalEditarItemId] = useState(null);
   const [modalEditarReqTrad, setModalEditarReqTrad] = useState(false);
   const [modalEditarObs, setModalEditarObs] = useState("");
+
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    title: "",
+    message: "",
+    confirmText: "Confirmar",
+    cancelText: "Cancelar",
+    variant: "default",
+    icon: AlertCircle,
+    onConfirm: null,
+  });
+
+  function abrirConfirmacion(config) {
+    setConfirmDialog({
+      open: true,
+      title: config.title ?? "Confirmar acción",
+      message: config.message ?? "¿Estás seguro de continuar?",
+      confirmText: config.confirmText ?? "Confirmar",
+      cancelText: config.cancelText ?? "Cancelar",
+      variant: config.variant ?? "default",
+      icon: config.icon ?? AlertCircle,
+      onConfirm: () => {
+        setConfirmDialog((prev) => ({ ...prev, open: false }));
+        config.onConfirm?.();
+      },
+    });
+  }
+
+  function cerrarConfirmacion() {
+    setConfirmDialog((prev) => ({ ...prev, open: false, onConfirm: null }));
+  }
 
   function abrirModalAgregar(categoriaId) {
     setModalCategoriaId(categoriaId);
@@ -454,55 +484,85 @@ export default function DocumentacionExpediente({ expediente = {} }) {
         toast.error("Escribe el nombre del documento");
         return;
       }
-      crearItemPersonalizado(
-        {
-          expedienteId,
-          categoriaId: categoria.id,
-          payload: {
-            categoria: mapCategoriaApi(categoria.id),
-            nombre_documento: nombreDocumento,
-            anexado_en_venta: false,
-            requiere_traduccion: !!modalRequiereTraduccion,
-            observaciones: `${modalObservaciones ?? ""}`.trim() || undefined,
-            usuario_id: usuarioId,
-          },
-        },
-        {
-          onSuccess: () => {
-            cerrarModalAgregar();
-          },
-        }
+    } else {
+      const plantillasDeCategoria = plantillasPorCategoria[categoria.id] ?? [];
+      const selectedId = seleccionado.replace("__id__:", "");
+      const match = plantillasDeCategoria.find(
+        (item) => String(getPlantillaId(item)) === selectedId
       );
+      if (!match) {
+        toast.error("No se pudo identificar el documento del catalogo");
+        return;
+      }
+    }
+
+    const nombreDoc =
+      seleccionado === "__otro__"
+        ? `${modalCustomNombre ?? ""}`.trim()
+        : (() => {
+            const plantillasDeCategoria = plantillasPorCategoria[categoria.id] ?? [];
+            const selectedId = seleccionado.replace("__id__:", "");
+            const match = plantillasDeCategoria.find(
+              (item) => String(getPlantillaId(item)) === selectedId
+            );
+            return match ? getPlantillaTitulo(match) : "";
+          })();
+
+    const valoresSnapshot = {
+      seleccionado,
+      reqTrad: !!modalRequiereTraduccion,
+      obs: `${modalObservaciones ?? ""}`.trim(),
+      customNombre: `${modalCustomNombre ?? ""}`.trim(),
+    };
+
+    cerrarModalAgregar();
+
+    abrirConfirmacion({
+      title: "Guardar nuevo requisito",
+      message: `¿Estás seguro de agregar el documento "${nombreDoc}" a la categoría "${categoria.titulo}"?`,
+      confirmText: "Sí, guardar",
+      cancelText: "Cancelar",
+      variant: "primary",
+      icon: Save,
+      onConfirm: () => ejecutarAgregar(categoria, valoresSnapshot),
+    });
+  }
+
+  function ejecutarAgregar(categoria, snap) {
+    const { seleccionado, reqTrad, obs, customNombre } = snap ?? {};
+
+    if (seleccionado === "__otro__") {
+      crearItemPersonalizado({
+        expedienteId,
+        categoriaId: categoria.id,
+        payload: {
+          categoria: mapCategoriaApi(categoria.id),
+          nombre_documento: customNombre,
+          anexado_en_venta: false,
+          requiere_traduccion: reqTrad,
+          observaciones: obs || undefined,
+          usuario_id: usuarioId,
+        },
+      });
       return;
     }
 
     const plantillasDeCategoria = plantillasPorCategoria[categoria.id] ?? [];
-    const selectedId = seleccionado.replace("__id__:", "");
+    const selectedId = (seleccionado ?? "").replace("__id__:", "");
     const match = plantillasDeCategoria.find(
       (item) => String(getPlantillaId(item)) === selectedId
     );
-    if (!match) {
-      toast.error("No se pudo identificar el documento del catalogo");
-      return;
-    }
 
-    crearItem(
-      {
-        expedienteId,
-        categoriaId: categoria.id,
-        payload: {
-          plantilla_checklist_id: getPlantillaId(match),
-          requiere_traduccion: !!modalRequiereTraduccion,
-          observaciones: `${modalObservaciones ?? ""}`.trim() || undefined,
-          usuario_id: usuarioId,
-        },
+    crearItem({
+      expedienteId,
+      categoriaId: categoria.id,
+      payload: {
+        plantilla_checklist_id: getPlantillaId(match),
+        requiere_traduccion: reqTrad,
+        observaciones: obs || undefined,
+        usuario_id: usuarioId,
       },
-      {
-        onSuccess: () => {
-          cerrarModalAgregar();
-        },
-      }
-    );
+    });
   }
 
   function eliminarDocumento(item) {
@@ -513,9 +573,18 @@ export default function DocumentacionExpediente({ expediente = {} }) {
       return;
     }
 
-    eliminarItem({
-      expedienteId,
-      docId,
+    abrirConfirmacion({
+      title: "Eliminar documento",
+      message: `¿Estás seguro de eliminar el documento "${item?.titulo_requisito ?? item?.nombre_documento ?? "este documento"}"? Esta acción no se puede deshacer.`,
+      confirmText: "Sí, eliminar",
+      cancelText: "Cancelar",
+      variant: "danger",
+      icon: Trash2,
+      onConfirm: () =>
+        eliminarItem({
+          expedienteId,
+          docId,
+        }),
     });
   }
 
@@ -532,6 +601,19 @@ export default function DocumentacionExpediente({ expediente = {} }) {
 
     const obsActual = item.observaciones ?? "";
 
+    abrirConfirmacion({
+      title: "Cambiar estado del documento",
+      message: `¿Estás seguro de cambiar el estado de "${item?.titulo_requisito ?? item?.nombre_documento ?? "este documento"}" de "${formatEstadoLabel(item.estado)}" a "${formatEstadoLabel(nuevoEstado)}"?`,
+      confirmText: "Sí, cambiar estado",
+      cancelText: "Cancelar",
+      variant: "primary",
+      icon: CheckCircle2,
+      onConfirm: () =>
+        ejecutarCambioEstado(item, nuevoEstado, obsActual),
+    });
+  }
+
+  function ejecutarCambioEstado(item, nuevoEstado, obsActual) {
     actualizarEstado({
       itemId: item.id,
       expedienteId,
@@ -563,23 +645,34 @@ export default function DocumentacionExpediente({ expediente = {} }) {
       return;
     }
 
-    actualizarEstado(
-      {
-        itemId: item.id,
-        expedienteId,
-        payload: {
-          estado: item.estado,
-          observaciones: `${modalEditarObs ?? ""}`.trim(),
-          requiere_traduccion: !!modalEditarReqTrad,
-          usuario_id: usuarioId,
-        },
+    const obs = `${modalEditarObs ?? ""}`.trim();
+    const reqTrad = !!modalEditarReqTrad;
+
+    cerrarModalEditar();
+
+    abrirConfirmacion({
+      title: "Guardar cambios",
+      message: `¿Estás seguro de guardar los cambios realizados en el documento "${item?.titulo_requisito ?? item?.nombre_documento ?? "este documento"}"?`,
+      confirmText: "Sí, guardar cambios",
+      cancelText: "Cancelar",
+      variant: "primary",
+      icon: Save,
+      onConfirm: () =>
+        ejecutarGuardarEdicion(item, obs, reqTrad),
+    });
+  }
+
+  function ejecutarGuardarEdicion(item, obs, reqTrad) {
+    actualizarEstado({
+      itemId: item.id,
+      expedienteId,
+      payload: {
+        estado: item.estado,
+        observaciones: obs,
+        requiere_traduccion: reqTrad,
+        usuario_id: usuarioId,
       },
-      {
-        onSuccess: () => {
-          cerrarModalEditar();
-        },
-      }
-    );
+    });
   }
 
   useEffect(() => {
@@ -671,12 +764,6 @@ export default function DocumentacionExpediente({ expediente = {} }) {
             completados: 0,
             pct: 0,
           };
-          const plantillasDeCat = plantillasPorCategoria[categoria.id] ?? [];
-          const _opcionesSelect = plantillasDeCat.filter((item) => {
-            const titulo = normalizarParaMatch(getPlantillaTitulo(item));
-            if (!titulo) return false;
-            return !plantillasTitulosYaUsados.has(titulo);
-          });
 
           return (
             <section
@@ -744,12 +831,6 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                       const IconComp = style.icon;
                       const isDropdownOpen = openDropdownId === item.id;
                       const requiereTraduccion = Boolean(item.requiere_traduccion);
-                      const puedeEnviarTraduccion =
-                        requiereTraduccion &&
-                        !enviandoATraduccion &&
-                        item.estado !== ESTADOS.EN_TRADUCCION &&
-                        item.estado !== ESTADOS.TRADUCIDO &&
-                        item.estado !== ESTADOS.EN_QUALITY_TRADUCCION;
 
                       return (
                         <div
@@ -761,7 +842,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                           <div className="flex flex-col gap-3">
                             <div className="flex items-start gap-3">
                               <div
-                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${style.iconBox}`}
+                                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-xl ${style.iconBox}`}
                               >
                                 <IconComp size={18} />
                               </div>
@@ -804,40 +885,38 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                                         />
                                       )}
                                       {formatEstadoLabel(item.estado)}
-                                      <ChevronDown
-                                        size={12}
-                                        className={`transition-transform ${
-                                          isDropdownOpen ? "rotate-180" : ""
-                                        }`}
-                                      />
                                     </button>
                                   </div>
 
                                   {requiereTraduccion ? (
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        solicitarTraduccionItem({
-                                          itemId: item.id,
-                                          prioridad: "MEDIA",
-                                          observaciones: `Solicitud de traducción para: ${item.titulo_requisito}`,
-                                        })
-                                      }
-                                      disabled={!puedeEnviarTraduccion}
-                                      className="inline-flex items-center gap-1.5 rounded-lg border border-sky-500 bg-sky-500 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-sky-600 dark:bg-sky-600 dark:hover:bg-sky-500"
-                                    >
-                                      {enviandoATraduccion ? (
-                                        <Loader2
-                                          size={11}
-                                          className="animate-spin"
-                                        />
-                                      ) : (
-                                        <Languages size={11} />
-                                      )}
-                                      {enviandoATraduccion
+                                    (() => {
+                                      const yaEnviado =
+                                        item.estado === ESTADOS.EN_TRADUCCION ||
+                                        item.estado === ESTADOS.TRADUCIDO ||
+                                        item.estado === ESTADOS.EN_QUALITY_TRADUCCION;
+
+                                      const labelBoton = enviandoATraduccion
                                         ? "Enviando..."
-                                        : "Enviar a Traducción"}
-                                    </button>
+                                        : yaEnviado
+                                          ? formatEstadoLabel(item.estado)
+                                          : "Enviado a Traducción";
+
+                                      return (
+                                        <span
+                                          className="inline-flex items-center gap-1.5 rounded-lg border border-[#0e183f]/40 bg-[#0e183f]/95 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white cursor-default select-none dark:border-[#0e183f]/60 dark:bg-[#0e183f]"
+                                        >
+                                          {enviandoATraduccion ? (
+                                            <Loader2
+                                              size={11}
+                                              className="animate-spin"
+                                            />
+                                          ) : (
+                                            <Languages size={11} />
+                                          )}
+                                          {labelBoton}
+                                        </span>
+                                      );
+                                    })()
                                   ) : null}
 
                                   <button
@@ -1028,44 +1107,44 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                 header={
                   <div className="flex min-w-0 items-start gap-3">
                     <div
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${categoriaModal.color.badge} ${categoriaModal.color.darkBadge}`}
+                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border ${categoriaModal.color.badge} ${categoriaModal.color.darkBadge}`}
                     >
-                      <IconCat size={18} />
+                      <IconCat size={22} />
                     </div>
                     <div className="min-w-0">
                       <p
-                        className={`text-[10px] font-bold uppercase tracking-wider ${categoriaModal.color.head}`}
+                        className={`text-[11px] font-bold uppercase tracking-wider ${categoriaModal.color.head}`}
                       >
                         Agregar requisito
                       </p>
-                      <h2 className="mt-0.5 truncate text-[15px] font-bold text-slate-800 dark:text-slate-100 sm:text-[16px]">
+                      <h2 className="mt-0.5 truncate text-[17px] font-bold text-slate-800 dark:text-slate-100 sm:text-[18px]">
                         {categoriaModal.titulo}
                       </h2>
                     </div>
                   </div>
                 }
-                headerClassName={`${categoriaModal.color.cardAccent}`}
-                size="md"
+                size="lg"
                 zIndex={10000}
                 footer={
                   <>
                     <button
                       type="button"
                       onClick={cerrarModalAgregar}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                      className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-[12px] font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
                     >
+                      <X size={14} />
                       Cancelar
                     </button>
                     <button
                       type="button"
                       onClick={() => confirmarAgregar(categoriaModal)}
                       disabled={disabledGuardar}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#0d1b5e] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#0d1b5e] px-5 py-2.5 text-[12px] font-bold uppercase tracking-wide text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {creandoItem || creandoItemPersonalizado ? (
-                        <Loader2 size={12} className="animate-spin" />
+                        <Loader2 size={14} className="animate-spin" />
                       ) : (
-                        <Plus size={12} />
+                        <Plus size={14} />
                       )}
                       {creandoItem || creandoItemPersonalizado
                         ? "Guardando..."
@@ -1074,17 +1153,17 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                   </>
                 }
               >
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {plantillasCargando ? (
-                    <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-[11px] text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
-                      <Loader2 size={12} className="animate-spin" />
+                    <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 p-4 text-[12px] text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
+                      <Loader2 size={14} className="animate-spin" />
                       Cargando plantillas disponibles...
                     </div>
                   ) : null}
 
                   <label className="block">
-                    <span className="mb-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                      Selecciona el titulo del requisito
+                    <span className="mb-1.5 block text-[12px] font-semibold text-slate-600 dark:text-slate-300">
+                      Selecciona el título del requisito
                     </span>
                     <select
                       value={modalSelectValue}
@@ -1093,7 +1172,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                         if (e.target.value !== "__otro__")
                           setModalCustomNombre("");
                       }}
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-[12px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-3 text-[13px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                     >
                       <option value="">- Sin seleccionar -</option>
                       {opcionesSelect.length ? (
@@ -1115,7 +1194,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                       ) : (
                         <>
                           <option disabled value="">
-                            No hay plantillas disponibles para esta categoria
+                            No hay plantillas disponibles para esta categoría
                           </option>
                           <option value="__otro__">Otro (personalizado)</option>
                         </>
@@ -1125,7 +1204,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
 
                   {modalSelectValue === "__otro__" ? (
                     <label className="block">
-                      <span className="mb-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                      <span className="mb-1.5 block text-[12px] font-semibold text-slate-600 dark:text-slate-300">
                         Nombre del documento
                       </span>
                       <input
@@ -1135,26 +1214,26 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                           setModalCustomNombre(e.target.value)
                         }
                         placeholder="Escribe el nombre del documento"
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-[12px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-3 text-[13px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                         autoFocus
                       />
                     </label>
                   ) : null}
 
-                  <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-slate-200 bg-white/50 p-3 transition hover:border-[#0d1b5e]/40 hover:bg-[#0d1b5e]/5 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-[#0d1b5e]/60 dark:hover:bg-[#0d1b5e]/10">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-white/50 p-4 transition hover:border-[#0d1b5e]/40 hover:bg-[#0d1b5e]/5 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-[#0d1b5e]/60 dark:hover:bg-[#0d1b5e]/10">
                     <input
                       type="checkbox"
                       checked={modalRequiereTraduccion}
                       onChange={(e) =>
                         setModalRequiereTraduccion(e.target.checked)
                       }
-                      className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-[#0d1b5e] focus:ring-[#0d1b5e]/30 dark:border-slate-700"
+                      className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 text-[#0d1b5e] focus:ring-[#0d1b5e]/30 dark:border-slate-700"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+                      <p className="text-[12px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">
                         ¿Documento requiere traducción?
                       </p>
-                      <p className="mt-0.5 text-[10px] leading-4 text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
                         Si lo marcas, después de guardar podrás enviar este
                         documento a traducción desde la tarjeta.
                       </p>
@@ -1162,7 +1241,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                   </label>
 
                   <label className="block">
-                    <span className="mb-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                    <span className="mb-1.5 block text-[12px] font-semibold text-slate-600 dark:text-slate-300">
                       Observaciones
                     </span>
                     <textarea
@@ -1170,7 +1249,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                       value={modalObservaciones}
                       onChange={(e) => setModalObservaciones(e.target.value)}
                       placeholder="Información adicional del requisito (opcional)"
-                      className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-[12px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                      className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3.5 py-3 text-[13px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                     />
                   </label>
                 </div>
@@ -1192,55 +1271,63 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                 open
                 onClose={cerrarModalEditar}
                 header={
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#0d1b5e]">
-                      Editar documento
-                    </p>
-                    <h2 className="mt-0.5 truncate text-[15px] font-bold text-slate-800 dark:text-slate-100 sm:text-[16px]">
-                      {itemEditando.titulo_requisito}
-                    </h2>
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#0d1b5e]/20 bg-[#0d1b5e]/5 dark:border-blue-900/50 dark:bg-blue-950/40">
+                      <Settings2 size={22} className="text-[#0d1b5e] dark:text-blue-300" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#0d1b5e]">
+                        Editar documento
+                      </p>
+                      <h2 className="mt-0.5 truncate text-[17px] font-bold text-slate-800 dark:text-slate-100 sm:text-[18px]">
+                        {itemEditando.titulo_requisito}
+                      </h2>
+                    </div>
                   </div>
                 }
-                size="md"
+                size="lg"
                 zIndex={10000}
                 footer={
                   <>
                     <button
                       type="button"
                       onClick={cerrarModalEditar}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                      className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-[12px] font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
                     >
+                      <X size={14} />
                       Cancelar
                     </button>
                     <button
                       type="button"
                       onClick={() => guardarModalEditar(itemEditando)}
                       disabled={actualizando}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#0d1b5e] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#0d1b5e] px-5 py-2.5 text-[12px] font-bold uppercase tracking-wide text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {actualizando ? (
-                        <Loader2 size={12} className="animate-spin" />
-                      ) : null}
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Save size={14} />
+                      )}
                       {actualizando ? "Guardando..." : "Guardar cambios"}
                     </button>
                   </>
                 }
               >
-                <div className="space-y-4">
-                  <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-slate-200 bg-white/50 p-3 transition hover:border-[#0d1b5e]/40 hover:bg-[#0d1b5e]/5 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-[#0d1b5e]/60 dark:hover:bg-[#0d1b5e]/10">
+                <div className="space-y-5">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-white/50 p-4 transition hover:border-[#0d1b5e]/40 hover:bg-[#0d1b5e]/5 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-[#0d1b5e]/60 dark:hover:bg-[#0d1b5e]/10">
                     <input
                       type="checkbox"
                       checked={modalEditarReqTrad}
                       onChange={(e) =>
                         setModalEditarReqTrad(e.target.checked)
                       }
-                      className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-[#0d1b5e] focus:ring-[#0d1b5e]/30 dark:border-slate-700"
+                      className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 text-[#0d1b5e] focus:ring-[#0d1b5e]/30 dark:border-slate-700"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+                      <p className="text-[12px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">
                         ¿Documento requiere traducción?
                       </p>
-                      <p className="mt-0.5 text-[10px] leading-4 text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
                         Actívalo para poder enviar este documento a traducción
                         después.
                       </p>
@@ -1248,7 +1335,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                   </label>
 
                   <label className="block">
-                    <span className="mb-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                    <span className="mb-1.5 block text-[12px] font-semibold text-slate-600 dark:text-slate-300">
                       Observaciones
                     </span>
                     <textarea
@@ -1256,9 +1343,94 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                       value={modalEditarObs}
                       onChange={(e) => setModalEditarObs(e.target.value)}
                       placeholder="Información adicional del requisito (opcional)"
-                      className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-[12px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                      className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3.5 py-3 text-[13px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                     />
                   </label>
+                </div>
+              </ModalGeneral>
+            );
+          })()
+        : null}
+
+      {confirmDialog.open
+        ? (() => {
+            const IconConfirm = confirmDialog.icon ?? AlertCircle;
+            const variantConfig = (() => {
+              switch (confirmDialog.variant) {
+                case "danger":
+                  return {
+                    iconBox:
+                      "border-red-200 bg-red-50 text-red-600 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-400",
+                    title: "text-red-700 dark:text-red-300",
+                    btnConfirm:
+                      "bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600",
+                  };
+                case "success":
+                  return {
+                    iconBox:
+                      "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400",
+                    title: "text-emerald-700 dark:text-emerald-300",
+                    btnConfirm:
+                      "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600",
+                  };
+                case "primary":
+                default:
+                  return {
+                    iconBox:
+                      "border-[#0d1b5e]/20 bg-[#0d1b5e]/5 text-[#0d1b5e] dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-300",
+                    title: "text-[#0d1b5e] dark:text-blue-200",
+                    btnConfirm:
+                      "bg-[#0d1b5e] hover:brightness-110 dark:bg-blue-800 dark:hover:bg-blue-700",
+                  };
+              }
+            })();
+
+            return (
+              <ModalGeneral
+                open
+                onClose={cerrarConfirmacion}
+                size="md"
+                zIndex={99999}
+                showClose={false}
+                closeOnBackdrop={false}
+                closeOnEscape={false}
+                footer={
+                  <>
+                    <button
+                      type="button"
+                      onClick={cerrarConfirmacion}
+                      className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-[12px] font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                    >
+                      <X size={14} />
+                      {confirmDialog.cancelText}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => confirmDialog.onConfirm?.()}
+                      className={`inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-[12px] font-bold uppercase tracking-wide text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${variantConfig.btnConfirm}`}
+                    >
+                      <CheckCircle2 size={14} />
+                      {confirmDialog.confirmText}
+                    </button>
+                  </>
+                }
+              >
+                <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
+                  <div
+                    className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border ${variantConfig.iconBox}`}
+                  >
+                    <IconConfirm size={26} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={`text-[15px] font-bold leading-6 ${variantConfig.title}`}
+                    >
+                      {confirmDialog.title}
+                    </p>
+                    <p className="mt-2 text-[13px] leading-6 text-slate-600 dark:text-slate-400">
+                      {confirmDialog.message}
+                    </p>
+                  </div>
                 </div>
               </ModalGeneral>
             );
