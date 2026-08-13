@@ -4,7 +4,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   CheckCircle2,
-  ChevronDown,
   Clock,
   FileCheck,
   FilePenLine,
@@ -12,7 +11,6 @@ import {
   Languages,
   Loader2,
   Plus,
-  Send,
   Settings2,
   Trash2,
   User,
@@ -74,7 +72,7 @@ const CATEGORIA_META = {
     color: {
       badge: "bg-blue-50 text-[#0d1b5e] border-[#0d1b5e]/20",
       ring: "ring-[#0d1b5e]/10",
-      head: "text-[#0d1b5e]",
+      head: "text-[#0d1b5e] dark:text-blue-200",
       accent: "#0d1b5e",
       darkBadge:
         "dark:bg-blue-950/50 dark:text-blue-200 dark:border-blue-900/50",
@@ -87,7 +85,7 @@ const CATEGORIA_META = {
     color: {
       badge: "bg-emerald-50 text-emerald-800 border-emerald-200",
       ring: "ring-emerald-500/10",
-      head: "text-emerald-700",
+      head: "text-emerald-700 dark:text-emerald-200",
       accent: "#047857",
       darkBadge:
         "dark:bg-emerald-950/40 dark:text-emerald-200 dark:border-emerald-900/50",
@@ -100,7 +98,7 @@ const CATEGORIA_META = {
     color: {
       badge: "bg-orange-50 text-orange-800 border-orange-200",
       ring: "ring-orange-500/10",
-      head: "text-orange-700",
+      head: "text-orange-700 dark:text-orange-200",
       accent: "#c2410c",
       darkBadge:
         "dark:bg-orange-950/40 dark:text-orange-200 dark:border-orange-900/50",
@@ -766,12 +764,6 @@ export default function DocumentacionExpediente({ expediente = {} }) {
             completados: 0,
             pct: 0,
           };
-          const plantillasDeCat = plantillasPorCategoria[categoria.id] ?? [];
-          const _opcionesSelect = plantillasDeCat.filter((item) => {
-            const titulo = normalizarParaMatch(getPlantillaTitulo(item));
-            if (!titulo) return false;
-            return !plantillasTitulosYaUsados.has(titulo);
-          });
 
           return (
             <section
@@ -839,12 +831,6 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                       const IconComp = style.icon;
                       const isDropdownOpen = openDropdownId === item.id;
                       const requiereTraduccion = Boolean(item.requiere_traduccion);
-                      const _puedeEnviarTraduccion =
-                        requiereTraduccion &&
-                        !enviandoATraduccion &&
-                        item.estado !== ESTADOS.EN_TRADUCCION &&
-                        item.estado !== ESTADOS.TRADUCIDO &&
-                        item.estado !== ESTADOS.EN_QUALITY_TRADUCCION;
 
                       return (
                         <div
@@ -856,7 +842,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                           <div className="flex flex-col gap-3">
                             <div className="flex items-start gap-3">
                               <div
-                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${style.iconBox}`}
+                                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-xl ${style.iconBox}`}
                               >
                                 <IconComp size={18} />
                               </div>
@@ -917,7 +903,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
 
                                       return (
                                         <span
-                                          className="inline-flex items-center gap-1.5 rounded-lg border border-sky-600/40 bg-sky-600/90 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white cursor-default select-none opacity-95 dark:border-sky-700/50 dark:bg-sky-700/90"
+                                          className="inline-flex items-center gap-1.5 rounded-lg border border-[#0e183f]/40 bg-[#0e183f]/95 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white cursor-default select-none dark:border-[#0e183f]/60 dark:bg-[#0e183f]"
                                         >
                                           {enviandoATraduccion ? (
                                             <Loader2
@@ -1137,7 +1123,6 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                     </div>
                   </div>
                 }
-                headerClassName={`${categoriaModal.color.cardAccent}`}
                 size="lg"
                 zIndex={10000}
                 footer={
@@ -1404,7 +1389,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
               <ModalGeneral
                 open
                 onClose={cerrarConfirmacion}
-                size="sm"
+                size="md"
                 zIndex={99999}
                 showClose={false}
                 closeOnBackdrop={false}
@@ -1414,35 +1399,35 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                     <button
                       type="button"
                       onClick={cerrarConfirmacion}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                      className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-[12px] font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
                     >
-                      <X size={12} />
+                      <X size={14} />
                       {confirmDialog.cancelText}
                     </button>
                     <button
                       type="button"
                       onClick={() => confirmDialog.onConfirm?.()}
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${variantConfig.btnConfirm}`}
+                      className={`inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-[12px] font-bold uppercase tracking-wide text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${variantConfig.btnConfirm}`}
                     >
-                      <CheckCircle2 size={12} />
+                      <CheckCircle2 size={14} />
                       {confirmDialog.confirmText}
                     </button>
                   </>
                 }
               >
-                <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+                <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
                   <div
-                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${variantConfig.iconBox}`}
+                    className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border ${variantConfig.iconBox}`}
                   >
-                    <IconConfirm size={22} />
+                    <IconConfirm size={26} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p
-                      className={`text-[13px] font-bold leading-5 ${variantConfig.title}`}
+                      className={`text-[15px] font-bold leading-6 ${variantConfig.title}`}
                     >
                       {confirmDialog.title}
                     </p>
-                    <p className="mt-1.5 text-[12px] leading-5 text-slate-600 dark:text-slate-400">
+                    <p className="mt-2 text-[13px] leading-6 text-slate-600 dark:text-slate-400">
                       {confirmDialog.message}
                     </p>
                   </div>
