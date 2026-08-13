@@ -18,6 +18,30 @@ import {
   enviarTraduccionQualityTraductor
 } from "../../../services/traduccionServices";
 
+const renderEstadoBadge = (estado) => {
+  const map = {
+    SOLICITADA: { text: "Solicitada", classes: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300" },
+    PENDIENTE_TRADUCCION: { text: "Pendiente Traducción", classes: "bg-slate-100 text-slate-800 dark:bg-slate-800/40 dark:text-slate-400" },
+    ASIGNADO_TRADUCTOR: { text: "Asignado a Traductor", classes: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300" },
+    QUALITY_DEVUELTO_TRADUCTOR: { text: "Devuelto por Quality", classes: "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-900" },
+    EN_QUALITY_PENDIENTE_ASIGNACION: { text: "Listo para Quality", classes: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300" },
+    ASIGNADO_QUALITY: { text: "En Auditoría Quality", classes: "bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300" },
+    TRADUCIDO_Y_VERIFICADO: { text: "Aprobado", classes: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" },
+    ILEGIBLE_DEVUELTO: { text: "Devuelto (Ilegible)", classes: "bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300" },
+    NO_REQUIERE: { text: "No Requiere", classes: "bg-slate-100 text-slate-500 dark:bg-slate-900 dark:text-slate-400" },
+    ILEGIBLE_CORREGIDO: { text: "Ilegible Corregido", classes: "bg-teal-100 text-teal-800 dark:bg-teal-950/40 dark:text-teal-300" },
+    CORREGIDO_TRADUCTOR_QUALITY: { text: "Corregido por Traductor", classes: "bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-300" },
+  };
+
+  const config = map[estado] || { text: estado || "Desconocido", classes: "bg-slate-100 text-slate-800 dark:bg-slate-800/40 dark:text-slate-400" };
+
+  return (
+    <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold tracking-wide transition-colors ${config.classes}`}>
+      {config.text}
+    </span>
+  );
+};
+
 export default function MisTraducciones() {
   const queryClient = useQueryClient();
 
@@ -197,6 +221,11 @@ export default function MisTraducciones() {
       header: "Documento",
       accessor: "nombre_documento",
       render: (val) => <span className="text-slate-600 dark:text-slate-400">{val || "-"}</span>
+    },
+    {
+      header: "Estado",
+      accessor: "estado_traduccion",
+      render: (val) => renderEstadoBadge(val)
     },
     {
       header: "Fecha Asignación",
