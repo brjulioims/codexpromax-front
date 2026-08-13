@@ -186,7 +186,7 @@ export default function Navbar() {
           <p
               className="group relative flex flex-col leading-none transition-all duration-300"
           >
-            <span className="text-[1.25rem] font-black uppercase tracking-tight text-white transition-colors duration-300 group-hover:text-[#d15f03]">
+            <span className="text-[1.1rem] font-black uppercase tracking-tight text-white transition-colors duration-300 group-hover:text-[#d15f03]">
               Immigration Solution Connect
             </span>
           </p>

@@ -126,35 +126,43 @@ function SidebarItem({
   const isActive = active || hasActiveChild;
 
   return (
-    <div className="relative mb-1 px-2">
+    <div className="relative mb-1">
       <button
         type="button"
         title={collapsed ? label : undefined}
         onClick={() => (hasChildren ? onToggleExpand?.() : onClick?.())}
-        className={`group flex h-11 w-full items-center justify-between rounded-xl px-3 text-[14px] font-medium transition-all duration-200 relative ${
+        className={`group relative flex h-12 w-full items-center justify-between rounded-r-xl pl-4 pr-3 text-[14px] font-medium transition-all duration-200 ${
           isActive
-            ? "bg-[#fe7405] text-white font-semibold shadow-[0_8px_16px_rgba(254,116,5,0.25)]"
-            : "text-white/70 hover:bg-white/10 hover:text-white"
-        } ${collapsed ? "justify-center px-0" : ""}`}
+            ? "bg-white/[0.07] text-[#fe7405] font-semibold"
+            : "text-white/70 hover:bg-white/5 hover:text-white"
+        } ${collapsed ? "justify-center pl-0 pr-0" : ""}`}
       >
+        {isActive && !collapsed && (
+          <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-[#fe7405]" />
+        )}
+        {isActive && collapsed && (
+          <span className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full bg-[#fe7405]" />
+        )}
         <span className={`flex items-center ${collapsed ? "" : "gap-3"} z-10`}>
           <span
-            className={`inline-flex items-center justify-center rounded-lg transition-transform duration-200 group-hover:scale-102 ${
-              isActive ? "text-white" : "text-white/50 group-hover:text-white"
-            } ${collapsed ? "h-9 w-9" : "h-5 w-5"}`}
+            className={`inline-flex items-center justify-center rounded-lg transition-transform duration-200 group-hover:scale-105 ${
+              isActive ? "text-[#fe7405]" : "text-white/50 group-hover:text-white"
+            } ${collapsed ? "h-10 w-10" : "h-5 w-5"}`}
           >
-            {Icon && <Icon size={18} strokeWidth={isActive ? 2.5 : 1.8} />}
+            {Icon && <Icon size={19} strokeWidth={isActive ? 2.4 : 1.8} />}
           </span>
 
-          {!collapsed && <span className="truncate tracking-wide">{label}</span>}
+          {!collapsed && <span className="truncate tracking-[0.02em]">{label}</span>}
         </span>
 
         {hasChildren && !collapsed && (
           <ChevronDown
-            size={14}
-            className={`text-white/40 transition-transform duration-200 z-10 group-hover:text-white ${
-              isExpanded ? "rotate-180 text-white" : ""
-            }`}
+            size={15}
+            className={`transition-transform duration-200 z-10 ${
+              isActive
+                ? "text-[#fe7405]/70 group-hover:text-[#fe7405]"
+                : "text-white/30 group-hover:text-white/70"
+            } ${isExpanded ? "rotate-180" : ""}`}
           />
         )}
       </button>
@@ -164,8 +172,8 @@ function SidebarItem({
         <div
           className={
             collapsed
-              ? "absolute left-[calc(100%-4px)] top-0 z-50 ml-3 w-54 space-y-0.5 rounded-xl border border-white/10 bg-[#0e183f] p-2 shadow-2xl"
-              : "mt-1 ml-5 space-y-0.5 border-l-2 border-white/10 pl-3 transition-all duration-200"
+              ? "absolute left-[calc(100%-4px)] top-0 z-50 ml-3 w-56 space-y-0.5 rounded-2xl border border-white/10 bg-[#0a1233] p-2 shadow-2xl"
+              : "mt-1.5 ml-6 space-y-1 pl-4 transition-all duration-200"
           }
         >
           {childrenItems.map((item) => (
@@ -175,8 +183,8 @@ function SidebarItem({
               onClick={item.onClick}
               className={`relative block w-full rounded-lg px-3 py-2 text-left text-[13px] tracking-wide transition-all duration-150 ${
                 item.active
-                  ? "text-[#fe7405] font-black bg-white/5"
-                  : "text-white/60 hover:bg-white/5 hover:text-white"
+                  ? "text-[#fe7405] font-semibold bg-[#fe7405]/10"
+                  : "text-white/55 hover:bg-white/5 hover:text-white"
               }`}
             >
               {item.label}
@@ -257,6 +265,7 @@ export default function Sidebar({
 
   const canShow = (item) => {
     if (!(enabledCodes instanceof Set)) return false;
+    if (enabledCodes.size === 0) return true;
     const hasChildren = (item.childrenItems ?? []).length > 0;
     const selfAllowed = enabledCodes.has(normalizePermissionCode(item.code));
     const childAllowed = (item.childrenItems ?? []).some((child) =>
@@ -273,10 +282,10 @@ export default function Sidebar({
           : "w-24 -translate-x-full md:translate-x-0"
       }`}
     >
-      <div className="flex h-full flex-col overflow-hidden rounded-xl  border-white bg-[#0e183f] shadow-[10px_0_25px_rgba(0,0,0,0.2)]">
+      <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-[#0a1233] shadow-[8px_0_30px_rgba(0,0,0,0.18)]">
       {/* HEADER: Área de Logo */}
-      <div className="shrink-0 px-4 border-b border-white/5 bg-black/10">
-        <div className={`flex h-20 items-center ${collapsed ? "justify-center" : "justify-between"}`}>
+      <div className="shrink-0 px-4 border-b border-white/5">
+        <div className={`flex h-16 items-center ${collapsed ? "justify-center" : "justify-between"}`}>
           {!collapsed && (
             <button
               type="button"
@@ -284,7 +293,7 @@ export default function Sidebar({
               className="flex items-center gap-2 rounded-xl transition-transform duration-200 active:scale-95"
             >
               <div className="p-2">
-                <span className="text-xl font-black text-white tracking-wider">
+                <span className="text-[1.05rem] font-black text-white tracking-[0.08em]">
                   IMSCONNECT
                 </span>
               </div>
@@ -295,18 +304,18 @@ export default function Sidebar({
             type="button"
             aria-label={open ? "Cerrar sidebar" : "Abrir sidebar"}
             onClick={onToggle}
-            className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition-all duration-200 hover:bg-white/10 hover:text-white shadow-sm ${
+            className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/80 transition-all duration-200 hover:bg-white/10 hover:text-white ${
               collapsed ? "mx-auto" : ""
             }`}
           >
-            {open ? <X size={15} /> : <Menu size={15} />}
+            {open ? <X size={16} /> : <Menu size={16} />}
           </button>
         </div>
       </div>
 
       {/* LINKS DE NAVEGACIÓN */}
-      <nav className="flex-1 space-y-1 overflow-y-auto pt-5 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {SIDEBAR_ITEMS.map((item, index) => (
+      <nav className="flex-1 space-y-1 overflow-y-auto pt-4 pb-4 pr-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {SIDEBAR_ITEMS.filter(canShow).map((item, index) => (
           <SidebarItem
             key={item.code ?? `sidebar-${index}`}
             icon={item.icon}
@@ -326,8 +335,8 @@ export default function Sidebar({
       </nav>
 
       {!collapsed && (
-        <div className="p-4 border-t border-white/5 bg-black/10 text-center">
-          <p className="text-[10px] font-bold text-white/30 tracking-wider">{`CODEXPRO v${APP_VERSION}`}</p>
+        <div className="p-4 border-t border-white/5 text-center">
+          <p className="text-[10px] font-bold text-white/25 tracking-[0.18em] uppercase">{`CODEXPRO v${APP_VERSION}`}</p>
         </div>
       )}
       </div>

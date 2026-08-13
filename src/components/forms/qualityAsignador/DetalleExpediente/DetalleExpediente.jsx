@@ -165,23 +165,31 @@ export default function DetalleExpediente() {
 
         {activeTab === "basica" ? (
           <>
-            <div className="divide-y divide-slate-100 px-8">
+            <div className="px-6 py-6 md:px-8 md:py-8 space-y-4">
               {filas.map((fila, index) => (
-                <div key={index} className="grid grid-cols-1 gap-6 py-6 md:grid-cols-3 md:gap-x-10">
-                  {fila.map((dato) => (
-                    <div key={dato.label}>
-                      <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#8da2ce]">
-                        {dato.label}
-                      </p>
-                      <p
-                        className={`mt-1 break-words text-[16px] leading-6 ${
-                          estaVacio(dato.value) ? "text-slate-300" : "text-[#0e183f]"
-                        }`}
+                <div key={index} className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-x-5">
+                  {fila.map((dato) => {
+                    const vacio = estaVacio(dato.value);
+                    return (
+                      <div
+                        key={dato.label}
+                        className="group rounded-xl border border-slate-200 bg-slate-50/60 p-4 transition-all duration-200 hover:border-[#fe7405]/40 hover:bg-white dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-[#fe7405]/50 dark:hover:bg-slate-900"
                       >
-                        {mostrarValor(dato.value)}
-                      </p>
-                    </div>
-                  ))}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                            {dato.label}
+                          </p>
+                          <p
+                            className={`mt-1.5 break-words text-[15px] leading-6 font-semibold ${
+                              vacio ? "text-slate-300 dark:text-slate-600" : "text-[#0a1233] dark:text-white"
+                            }`}
+                          >
+                            {mostrarValor(dato.value)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ))}
             </div>
