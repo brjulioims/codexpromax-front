@@ -130,7 +130,7 @@ export default function DetalleExpediente() {
       <div className="w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200">
           <div className="flex items-center gap-4 px-8 pt-5">
-            <h3 className="text-[25px] font-semibold uppercase tracking-[0.02em] text-[#101a3c]">
+            <h3 className="text-[25px] font-semibold uppercase tracking-[0.02em] text-[#101a3c] dark:text-white">
               <span className="block">{nombre}</span>
             </h3>
           </div>
@@ -140,8 +140,8 @@ export default function DetalleExpediente() {
               onClick={() => setActiveTab("basica")}
               className={`relative flex items-center gap-2 rounded-t-xl px-5 py-3 text-sm font-semibold uppercase tracking-wide transition-all duration-200 ${
                 activeTab === "basica"
-                  ? "bg-white text-[#0d1b5e] border-x border-t border-slate-200 mb-[-1px]"
-                  : "text-slate-500 hover:text-[#0d1b5e] hover:bg-slate-50"
+                  ? "bg-white text-[#0d1b5e] border-x border-t border-slate-200 mb-[-1px] dark:bg-slate-900 dark:text-blue-200 dark:border-x-slate-700 dark:border-t-slate-700"
+                  : "text-slate-500 hover:text-[#0d1b5e] hover:bg-slate-50 dark:text-slate-400 dark:hover:text-blue-300 dark:hover:bg-slate-800"
               }`}
             >
               <BriefcaseBusiness size={16} />
@@ -153,8 +153,8 @@ export default function DetalleExpediente() {
               onClick={() => setActiveTab("documentacion")}
               className={`relative flex items-center gap-2 rounded-t-xl px-5 py-3 text-sm font-semibold uppercase tracking-wide transition-all duration-200 ${
                 activeTab === "documentacion"
-                  ? "bg-white text-[#0d1b5e] border-x border-t border-slate-200 mb-[-1px]"
-                  : "text-slate-500 hover:text-[#0d1b5e] hover:bg-slate-50"
+                  ? "bg-white text-[#0d1b5e] border-x border-t border-slate-200 mb-[-1px] dark:bg-slate-900 dark:text-blue-200 dark:border-x-slate-700 dark:border-t-slate-700"
+                  : "text-slate-500 hover:text-[#0d1b5e] hover:bg-slate-50 dark:text-slate-400 dark:hover:text-blue-300 dark:hover:bg-slate-800"
               }`}
             >
               <FileText size={16} />
