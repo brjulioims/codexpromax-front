@@ -14,7 +14,7 @@ import ExpedienteAsignado from "./components/forms/qualityAsignador/ExpedienteAs
 import ExpedienteSinAsignar from "./components/forms/qualityAsignador/ExpedienteSinAsignar";
 import DetalleExpediente from "./components/forms/qualityAsignador/DetalleExpediente/DetalleExpediente";
 import Usuario from "./components/forms/Mantenimiento/Usuario";
-import QualityTraduccion from "./components/forms/Traduccion/QualityTraduccion";
+import AsignacionesTraduccion from "./components/forms/Traduccion/AsignacionesTraduccion";
 import MisAuditoriasTraduccion from "./components/forms/Traduccion/MisAuditoriasTraduccion";
 import MisTraducciones from "./components/forms/Traduccion/MisTraducciones";
 
@@ -131,10 +131,10 @@ export default function App() {
             }
           />
           <Route
-            path="/quality_traduccion"
+            path="/asignaciones-traduccion"
             element={
               <LayoutShell>
-                <QualityTraduccion />
+                <AsignacionesTraduccion />
               </LayoutShell>
             }
           />

@@ -73,9 +73,9 @@ const SIDEBAR_ITEMS = [
     childrenItems: [
       {
         code: "quality_traduccion",
-        label: "Quality - Traducción",
-        activeMatch: ["/quality_traduccion"],
-        route: "/quality_traduccion",
+        label: "Asignaciones - Traducción",
+        activeMatch: ["/asignaciones-traduccion"],
+        route: "/asignaciones-traduccion",
       },
       {
         code: "mis_traducciones",

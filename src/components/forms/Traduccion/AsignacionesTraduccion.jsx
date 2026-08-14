@@ -42,7 +42,7 @@ const renderEstadoBadge = (estado) => {
   );
 };
 
-export default function QualityTraduccion() {
+export default function AsignacionesTraduccion() {
   const queryClient = useQueryClient();
 
   // Active Tab:
@@ -297,7 +297,7 @@ export default function QualityTraduccion() {
   return (
     <section className="space-y-5">
       <HeaderBox
-        title="Quality - Traducción"
+        title="Asignaciones - Traducción"
         subtitle="Asignación de Traductores y Revisores de Calidad para Traducciones"
         Icon={FileText}
         action={
