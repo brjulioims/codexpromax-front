@@ -11,6 +11,7 @@ import {
 import Swal from "sweetalert2";
 
 import HeaderBox from "../../ui/HeaderBox";
+import ModalGeneral from "../../ui/ModalGeneral";
 import Table from "../../ui/Table";
 import {
   getMisAsignacionesTraductor,
@@ -295,17 +296,18 @@ export default function MisTraducciones() {
 
       {/* MODAL: REPORTAR DAÑADO / ILEGIBLE */}
       {ilegibleOpen && selectedDoc && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={closeModal} />
-          <div className="relative z-10 w-full max-w-md rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl animate-in fade-in zoom-in duration-200">
-            <header className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4 bg-red-900 text-white rounded-t-xl">
-              <div>
-                <h3 className="text-md font-bold uppercase tracking-wide">Reportar Documento Ilegible</h3>
-                <p className="text-xs text-white/70">Expediente: {selectedDoc.codigo_expediente}</p>
-              </div>
-              <button type="button" onClick={closeModal} className="text-white hover:text-white/80 font-bold text-lg leading-none">&times;</button>
-            </header>
-            <form onSubmit={handleIlegibleSubmit} className="p-6 space-y-4">
+        <ModalGeneral
+          open
+          onClose={closeModal}
+          size="md"
+          header={
+            <div>
+              <h3 className="text-md font-bold uppercase tracking-wide">Reportar Documento Ilegible</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Expediente: {selectedDoc.codigo_expediente}</p>
+            </div>
+          }
+        >
+          <form onSubmit={handleIlegibleSubmit} className="space-y-4">
               <div className="space-y-1">
                 <span className="block text-xs font-semibold text-slate-400 uppercase">Documento</span>
                 <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200">{selectedDoc.nombre_documento}</span>
@@ -331,24 +333,24 @@ export default function MisTraducciones() {
                   {ilegibleMutation.isPending ? "Reportando..." : "Reportar"}
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </ModalGeneral>
       )}
 
       {/* MODAL: ENVIAR TRADUCCIÓN A QUALITY */}
       {uploadOpen && selectedDoc && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={closeModal} />
-          <div className="relative z-10 w-full max-w-lg rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl animate-in fade-in zoom-in duration-200">
-            <header className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4 bg-[#0e183f] text-white rounded-t-xl">
-              <div>
-                <h3 className="text-md font-bold uppercase tracking-wide">Enviar traducción finalizada</h3>
-                <p className="text-xs text-white/70">Expediente: {selectedDoc.codigo_expediente}</p>
-              </div>
-              <button type="button" onClick={closeModal} className="text-white hover:text-white/80 font-bold text-lg leading-none">&times;</button>
-            </header>
-            <form onSubmit={handleUploadSubmit} className="p-6 space-y-4">
+        <ModalGeneral
+          open
+          onClose={closeModal}
+          size="lg"
+          header={
+            <div>
+              <h3 className="text-md font-bold uppercase tracking-wide">Enviar traducción finalizada</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Expediente: {selectedDoc.codigo_expediente}</p>
+            </div>
+          }
+        >
+          <form onSubmit={handleUploadSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm border-b border-slate-100 dark:border-slate-800 pb-3">
                 <div>
                   <span className="block text-xs font-semibold text-slate-400 uppercase">Cliente</span>
@@ -408,9 +410,8 @@ export default function MisTraducciones() {
                   {sendQualityMutation.isPending ? "Enviando..." : "Enviar a Quality"}
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </ModalGeneral>
       )}
     </section>
   );

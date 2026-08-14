@@ -12,6 +12,7 @@ import {
 import Swal from "sweetalert2";
 
 import HeaderBox from "../../ui/HeaderBox";
+import ModalGeneral from "../../ui/ModalGeneral";
 import Table from "../../ui/Table";
 import {
   getMisAsignacionesQuality,
@@ -288,17 +289,18 @@ export default function MisAuditoriasTraduccion() {
 
       {/* MODAL: AUDITORÍA (APROBAR / RECHAZAR) */}
       {auditOpen && selectedDoc && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={closeModal} />
-          <div className="relative z-10 w-full max-w-lg rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl animate-in fade-in zoom-in duration-200">
-            <header className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4 bg-[#0e183f] text-white rounded-t-xl">
-              <div>
-                <h3 className="text-md font-bold uppercase tracking-wide">Auditoría de Traducción</h3>
-                <p className="text-xs text-white/70">Expediente: {selectedDoc.codigo_expediente}</p>
-              </div>
-              <button type="button" onClick={closeModal} className="text-white hover:text-white/80 font-bold text-lg leading-none">&times;</button>
-            </header>
-            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+        <ModalGeneral
+          open
+          onClose={closeModal}
+          size="lg"
+          header={
+            <div>
+              <h3 className="text-md font-bold uppercase tracking-wide">Auditoría de Traducción</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Expediente: {selectedDoc.codigo_expediente}</p>
+            </div>
+          }
+        >
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4 text-sm border-b border-slate-100 dark:border-slate-800 pb-4">
                 <div>
                   <span className="block text-xs font-semibold text-slate-400 uppercase">Cliente</span>
@@ -381,11 +383,10 @@ export default function MisAuditoriasTraduccion() {
                   </div>
                 </form>
               ) : null}
-            </div>
+          </div>
 
-            {/* Footer principal */}
-            {!rechazoOpen && (
-              <footer className="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 px-6 py-4 rounded-b-xl">
+          {!rechazoOpen && (
+            <footer className="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
                 <button type="button" onClick={closeModal} className="h-10 rounded-lg px-4 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Cerrar</button>
                 <button
                   type="button"
@@ -404,10 +405,9 @@ export default function MisAuditoriasTraduccion() {
                   <ClipboardCheck size={16} />
                   {approveMutation.isPending ? "Aprobando..." : "Aprobar"}
                 </button>
-              </footer>
-            )}
-          </div>
-        </div>
+            </footer>
+          )}
+        </ModalGeneral>
       )}
     </section>
   );

@@ -99,7 +99,7 @@ export default function DetalleExpediente() {
           <div className="flex items-center gap-3">
             <span>{nombre}</span>
             {expediente.prioridad && (
-              <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getPrioridadBadge(expediente.prioridad)}`}>
+              <span className={`rounded-lg border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getPrioridadBadge(expediente.prioridad)}`}>
                 {expediente.prioridad}
               </span>
             )}
