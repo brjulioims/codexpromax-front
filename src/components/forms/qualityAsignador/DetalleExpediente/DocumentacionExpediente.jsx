@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -32,38 +31,6 @@ import { solicitarTraduccionChecklistItem } from "../../../../services/paralegal
 import { usePlantillasChecklistQuery } from "../../../../hooks/queries/usePlantillasChecklistQuery";
 import { useMeQuery } from "../../../../hooks/queries/useMeQuery";
 import { queryKeys } from "../../../../utils/queryKeys";
-
-const ESTADOS = {
-  RECIBIDO: "RECIBIDO",
-  PENDIENTE: "PENDIENTE",
-  EN_REDACCION: "EN_REDACCION",
-  REQUIERE_CORRECCION: "REQUIERE_CORRECCION",
-  NO_APLICA: "NO_APLICA",
-};
-
-const ESTADOS_REDACCION = new Set([
-  "EN_REDACCION",
-  "EN_QUALITY_REDACCION",
-  "APROBADO_REDACCION",
-]);
-
-const ESTADOS_TRADUCCION = new Set([
-  "EN_TRADUCCION",
-  "EN_QUALITY_TRADUCCION",
-  "TRADUCIDO",
-]);
-
-const ESTADOS_OCULTOS = new Set([
-  ...ESTADOS_REDACCION,
-  ...ESTADOS_TRADUCCION,
-]);
-
-const ESTADOS_SELECTABLES = [
-  ESTADOS.PENDIENTE,
-  ESTADOS.RECIBIDO,
-  ESTADOS.REQUIERE_CORRECCION,
-  ESTADOS.NO_APLICA,
-];
 
 const CATEGORIA_META = {
   biograficos: {
@@ -139,7 +106,7 @@ function formatEstadoLabel(estado) {
 
 function getEstadoStyle(estado) {
   switch (estado) {
-    case ESTADOS.RECIBIDO:
+    case "RECIBIDO":
       return {
         container:
           "pl-1 bg-transparent",
@@ -150,7 +117,7 @@ function getEstadoStyle(estado) {
         title: "text-slate-800 dark:text-slate-200 font-semibold",
         meta: "text-slate-500 dark:text-slate-400",
       };
-    case ESTADOS.PENDIENTE:
+    case "PENDIENTE":
       return {
         container:
           "pl-1 bg-transparent",
@@ -161,7 +128,7 @@ function getEstadoStyle(estado) {
         title: "text-slate-700 dark:text-slate-300 font-medium",
         meta: "text-slate-400 dark:text-slate-500",
       };
-    case ESTADOS.NO_APLICA:
+    case "NO_APLICA":
       return {
         container:
           "pl-1 bg-transparent",
@@ -172,7 +139,7 @@ function getEstadoStyle(estado) {
         title: "text-slate-800 dark:text-slate-200 font-semibold",
         meta: "text-slate-500 dark:text-slate-400",
       };
-    case ESTADOS.REQUIERE_CORRECCION:
+    case "REQUIERE_CORRECCION":
     default:
       return {
         container:
@@ -267,13 +234,13 @@ function getSelectEstadoStyle(estado) {
     "text-[11px] font-bold uppercase tracking-wider border rounded-lg px-2.5 py-1.5";
 
   switch (estado) {
-    case ESTADOS.RECIBIDO:
+    case "RECIBIDO":
       return `${base} border-emerald-500 bg-emerald-500 text-white`;
-    case ESTADOS.PENDIENTE:
+    case "PENDIENTE":
       return `${base} border-slate-500 bg-slate-500 text-white`;
-    case ESTADOS.NO_APLICA:
+    case "NO_APLICA":
       return `${base} border-orange-500 bg-orange-500 text-white`;
-    case ESTADOS.REQUIERE_CORRECCION:
+    case "REQUIERE_CORRECCION":
     default:
       return `${base} border-[#0d1b5e] bg-[#0d1b5e] text-white`;
   }
@@ -391,7 +358,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
   });
 
   const [openDropdownId, setOpenDropdownId] = useState(null);
-  const [dropdownPos, setDropdownPos] = useState({});
+  const [, setDropdownPos] = useState({});
   const dropdownContenedorRef = useRef(null);
   const modalRef = useRef(null);
   const modalEditarRef = useRef(null);
@@ -460,10 +427,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
     []
   );
 
-  const checklistVisible = useMemo(
-    () => checklist.filter((i) => !ESTADOS_OCULTOS.has(i.estado)),
-    [checklist]
-  );
+  const checklistVisible = useMemo(() => checklist, [checklist]);
 
   const itemsPorCategoria = useMemo(() => {
     const out = Object.fromEntries(categorias.map((c) => [c.id, []]));
@@ -519,12 +483,12 @@ export default function DocumentacionExpediente({ expediente = {} }) {
   const resumen = useMemo(() => {
     const total = checklistVisible.length;
     const estaCompletado = (estado) =>
-      estado === ESTADOS.RECIBIDO || estado === ESTADOS.NO_APLICA;
+      estado === "RECIBIDO" || estado === "NO_APLICA";
     const completados = checklistVisible.filter((i) =>
       estaCompletado(i.estado)
     ).length;
     const pendientes = checklistVisible.filter(
-      (i) => i.estado === ESTADOS.PENDIENTE
+      (i) => i.estado === "PENDIENTE"
     ).length;
     const otros = total - completados - pendientes;
     const pct = total > 0 ? (completados / total) * 100 : 0;
@@ -688,45 +652,6 @@ export default function DocumentacionExpediente({ expediente = {} }) {
     });
   }
 
-  function cambiarEstado(item, nuevoEstado) {
-    if (!usuarioId) {
-      toast.error("No hay usuario autenticado para actualizar el documento");
-      return;
-    }
-
-    if (nuevoEstado === item.estado) {
-      setOpenDropdownId(null);
-      return;
-    }
-
-    const obsActual = item.observaciones ?? "";
-
-    abrirConfirmacion({
-      title: "Cambiar estado del documento",
-      message: `¿Estás seguro de cambiar el estado de "${item?.titulo_requisito ?? item?.nombre_documento ?? "este documento"}" de "${formatEstadoLabel(item.estado)}" a "${formatEstadoLabel(nuevoEstado)}"?`,
-      confirmText: "Sí, cambiar estado",
-      cancelText: "Cancelar",
-      variant: "primary",
-      icon: CheckCircle2,
-      onConfirm: () =>
-        ejecutarCambioEstado(item, nuevoEstado, obsActual),
-    });
-  }
-
-  function ejecutarCambioEstado(item, nuevoEstado, obsActual) {
-    actualizarEstado({
-      itemId: item.id,
-      expedienteId,
-      payload: {
-        estado: nuevoEstado,
-        observaciones: obsActual,
-        usuario_id: usuarioId,
-      },
-    });
-
-    setOpenDropdownId(null);
-  }
-
   function abrirModalEditar(item) {
     setModalEditarItemId(item.id);
     setModalEditarReqTrad(Boolean(item.requiere_traduccion));
@@ -778,7 +703,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
   useEffect(() => {
     if (!openDropdownId) return;
 
-    const menuHeight = ESTADOS_SELECTABLES.length * 36 + 44;
+    const menuHeight = 188;
 
     const handleClickOutside = (event) => {
       if (dropdownContenedorRef.current?.contains(event.target)) return;
@@ -854,7 +779,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
   }
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-5 py-5">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {categorias.map((categoria) => {
           const IconCat = categoria.icon;
@@ -868,7 +793,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
           return (
             <section
               key={categoria.id}
-              className={`flex flex-col rounded-2xl border border-slate-200 bg-white ring-1 ring-slate-100 transition dark:border-slate-800 dark:bg-slate-900/40 dark:ring-slate-800 ${categoria.color.ring}`}
+              className={`flex flex-col rounded-lg border border-slate-200 bg-white ring-1 ring-slate-100 transition dark:border-slate-800 dark:bg-slate-900/40 dark:ring-slate-800 ${categoria.color.ring}`}
             >
               <header className="flex items-start justify-between gap-3 border-b border-slate-200/80 bg-slate-100/70 p-4 dark:border-slate-800/60 dark:bg-slate-950/70 xl:p-5 rounded-t-2xl">
                 <div className="flex min-w-0 flex-1 items-start gap-3">
@@ -945,7 +870,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
 
                                 {/* Badges Row */}
                                 <div className="flex flex-wrap items-center gap-2">
-                                  {item.estado !== ESTADOS.RECIBIDO && (
+                                  {item.estado !== "RECIBIDO" && (
                                     <span
                                       className={`inline-flex items-center gap-1.5 select-none ${getSelectEstadoStyle(
                                         item.estado
@@ -1001,7 +926,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                                     }
 
                                     // Si requiere traducción pero aún no está en RECIBIDO, mostramos "Pendiente Recepción"
-                                    if (item.estado !== ESTADOS.RECIBIDO) {
+                                    if (item.estado !== "RECIBIDO") {
                                       return (
                                         <span
                                           title="El documento debe marcarse como RECIBIDO para poder enviarse a traducción"
@@ -1028,7 +953,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                                   <p className={`text-[11px] leading-5 ${style.meta}`}>
                                     {item.observaciones}
                                   </p>
-                                ) : item.estado === ESTADOS.PENDIENTE ? (
+                                ) : item.estado === "PENDIENTE" ? (
                                   <p className={`text-[11px] italic ${style.meta}`}>
                                     Sin observaciones registradas
                                   </p>
@@ -1055,7 +980,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                             {/* Right Side: Actions (Edit, Delete, Enviar Traducción) */}
                             <div className="flex items-center gap-1.5 shrink-0 self-start mt-0.5">
                               {/* Botón de Enviar a Traducción si ya está Recibido y requiere traducción pero no está enviado */}
-                              {requiereTraduccion && item.estado === ESTADOS.RECIBIDO && (
+                              {requiereTraduccion && item.estado === "RECIBIDO" && (
                                 (() => {
                                   const yaEnviado =
                                     item.estado_traduccion &&
