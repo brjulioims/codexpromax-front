@@ -28,6 +28,7 @@ import {
   useUpdateChecklistItemMutation,
 } from "../../../../hooks/mutations/useChecklistMutations";
 import { useExpedienteChecklistQuery } from "../../../../hooks/queries/useExpedienteChecklistQuery";
+import { solicitarTraduccionChecklistItem } from "../../../../services/paralegalServices";
 import { usePlantillasChecklistQuery } from "../../../../hooks/queries/usePlantillasChecklistQuery";
 import { useMeQuery } from "../../../../hooks/queries/useMeQuery";
 import { queryKeys } from "../../../../utils/queryKeys";
@@ -70,12 +71,12 @@ const CATEGORIA_META = {
     descripcion: "Identidad, nacimiento y declaraciones personales",
     icon: FileText,
     color: {
-      badge: "bg-blue-50 text-[#0d1b5e] border-[#0d1b5e]/20",
-      ring: "ring-[#0d1b5e]/10",
-      head: "text-[#0d1b5e] dark:text-blue-200",
+      badge: "bg-slate-100/60 text-slate-500 border-slate-200/50 dark:bg-slate-800/30 dark:text-slate-400",
+      ring: "ring-slate-100 dark:ring-slate-900",
+      head: "text-slate-800 dark:text-white",
       accent: "#0d1b5e",
       darkBadge:
-        "dark:bg-blue-950/50 dark:text-blue-200 dark:border-blue-900/50",
+        "dark:bg-slate-800/30 dark:text-slate-400 dark:border-slate-800",
     },
   },
   evidencias: {
@@ -83,12 +84,12 @@ const CATEGORIA_META = {
     descripcion: "Pruebas documentales y fotograficas",
     icon: FileCheck,
     color: {
-      badge: "bg-emerald-50 text-emerald-800 border-emerald-200",
-      ring: "ring-emerald-500/10",
-      head: "text-emerald-700 dark:text-emerald-200",
-      accent: "#047857",
+      badge: "bg-slate-100/60 text-slate-500 border-slate-200/50 dark:bg-slate-800/30 dark:text-slate-400",
+      ring: "ring-slate-100 dark:ring-slate-900",
+      head: "text-slate-800 dark:text-white",
+      accent: "#0d1b5e",
       darkBadge:
-        "dark:bg-emerald-950/40 dark:text-emerald-200 dark:border-emerald-900/50",
+        "dark:bg-slate-800/30 dark:text-slate-400 dark:border-slate-800",
     },
   },
   formularios: {
@@ -96,12 +97,12 @@ const CATEGORIA_META = {
     descripcion: "Formatos oficiales y solicitudes",
     icon: FilePenLine,
     color: {
-      badge: "bg-orange-50 text-orange-800 border-orange-200",
-      ring: "ring-orange-500/10",
-      head: "text-orange-700 dark:text-orange-200",
-      accent: "#c2410c",
+      badge: "bg-slate-100/60 text-slate-500 border-slate-200/50 dark:bg-slate-800/30 dark:text-slate-400",
+      ring: "ring-slate-100 dark:ring-slate-900",
+      head: "text-slate-800 dark:text-white",
+      accent: "#0d1b5e",
       darkBadge:
-        "dark:bg-orange-950/40 dark:text-orange-200 dark:border-orange-900/50",
+        "dark:bg-slate-800/30 dark:text-slate-400 dark:border-slate-800",
     },
   },
 };
@@ -141,49 +142,124 @@ function getEstadoStyle(estado) {
     case ESTADOS.RECIBIDO:
       return {
         container:
-          "border border-emerald-200 border-l-[5px] border-l-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-900/50 dark:border-l-emerald-400",
-        iconBox: "bg-emerald-500 text-white",
+          "pl-1 bg-transparent",
+        iconBox: "bg-emerald-500 text-white dark:bg-emerald-600",
         icon: CheckCircle2,
         badge: "bg-emerald-500 text-white",
         dot: "bg-white",
-        title: "text-emerald-900 dark:text-emerald-100",
-        meta: "text-emerald-700/80 dark:text-emerald-200/70",
+        title: "text-slate-800 dark:text-slate-200 font-semibold",
+        meta: "text-slate-500 dark:text-slate-400",
       };
     case ESTADOS.PENDIENTE:
       return {
         container:
-          "border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800",
-        iconBox: "bg-slate-400 text-white dark:bg-slate-600",
+          "pl-1 bg-transparent",
+        iconBox: "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500",
         icon: Clock,
         badge: "bg-slate-500 text-white",
         dot: "bg-white",
-        title: "text-slate-800 dark:text-slate-100",
-        meta: "text-slate-500 dark:text-slate-400",
+        title: "text-slate-700 dark:text-slate-300 font-medium",
+        meta: "text-slate-400 dark:text-slate-500",
       };
     case ESTADOS.NO_APLICA:
       return {
         container:
-          "border border-orange-200 border-l-[5px] border-l-orange-500 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-900/40 dark:border-l-orange-400",
-        iconBox: "bg-orange-500 text-white dark:bg-orange-500",
+          "pl-1 bg-transparent",
+        iconBox: "bg-orange-500 text-white dark:bg-orange-600",
         icon: AlertTriangle,
-        badge: "bg-orange-500 text-white dark:bg-orange-500",
+        badge: "bg-orange-500 text-white",
         dot: "bg-white",
-        title: "text-orange-900 dark:text-orange-100",
-        meta: "text-orange-700/80 dark:text-orange-200/70",
+        title: "text-slate-800 dark:text-slate-200 font-semibold",
+        meta: "text-slate-500 dark:text-slate-400",
       };
     case ESTADOS.REQUIERE_CORRECCION:
     default:
       return {
         container:
-          "border border-[#0d1b5e]/20 border-l-[5px] border-l-[#0d1b5e] bg-[#0d1b5e]/5 dark:bg-blue-950/20 dark:border-blue-900/40 dark:border-l-blue-700",
-        iconBox: "bg-[#0d1b5e] text-white dark:bg-blue-800",
+          "pl-1 bg-transparent",
+        iconBox: "bg-rose-500 text-white dark:bg-rose-600",
         icon: AlertTriangle,
-        badge: "bg-[#0d1b5e] text-white dark:bg-blue-800",
+        badge: "bg-rose-500 text-white",
         dot: "bg-white",
-        title: "text-[#0d1b5e] dark:text-blue-100",
-        meta: "text-[#0d1b5e]/80 dark:text-blue-200/80",
+        title: "text-slate-800 dark:text-slate-200 font-semibold",
+        meta: "text-slate-500 dark:text-slate-400",
       };
   }
+}
+
+function getItemStyle(item, categoriaId) {
+  const requiereTraduccion = Boolean(item.requiere_traduccion) && categoriaId !== "formularios";
+  
+  if (requiereTraduccion) {
+    const estadoTrad = item.estado_traduccion;
+    const yaEnviado =
+      estadoTrad &&
+      estadoTrad !== "PENDIENTE_TRADUCCION" &&
+      estadoTrad !== "NO_REQUIERE";
+    const aprobado = estadoTrad === "TRADUCIDO_Y_VERIFICADO";
+    
+    if (aprobado) {
+      // Green (Approved)
+      return {
+        container:
+          "pl-1 bg-transparent",
+        iconBox: "bg-emerald-500 text-white dark:bg-emerald-600",
+        icon: CheckCircle2,
+        badge: "bg-emerald-500 text-white",
+        dot: "bg-white",
+        title: "text-slate-800 dark:text-slate-200 font-semibold",
+        meta: "text-slate-500 dark:text-slate-400",
+      };
+    }
+    
+    const devuelto =
+      estadoTrad === "ILEGIBLE_DEVUELTO" ||
+      estadoTrad === "QUALITY_DEVUELTO_TRADUCTOR";
+
+    if (devuelto) {
+      // Red/Rose (Devuelto)
+      return {
+        container:
+          "pl-1 bg-transparent",
+        iconBox: "bg-rose-500 text-white dark:bg-rose-600",
+        icon: AlertTriangle,
+        badge: "bg-rose-500 text-white",
+        dot: "bg-white",
+        title: "text-slate-800 dark:text-slate-200 font-semibold",
+        meta: "text-slate-500 dark:text-slate-400",
+      };
+    }
+
+    if (yaEnviado) {
+      // Amber/Yellow (Pending translation)
+      return {
+        container:
+          "pl-1 bg-transparent",
+        iconBox: "bg-amber-500 text-white dark:bg-amber-600",
+        icon: Clock,
+        badge: "bg-amber-500 text-white",
+        dot: "bg-white",
+        title: "text-slate-800 dark:text-slate-200 font-semibold",
+        meta: "text-slate-500 dark:text-slate-400",
+      };
+    }
+    
+    // Requiere traducción pero aún no se envía
+    // No color (Grey/White)
+    return {
+      container:
+        "pl-1 bg-transparent",
+      iconBox: "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500",
+      icon: Clock,
+      badge: "bg-slate-500 text-white",
+      dot: "bg-white",
+      title: "text-slate-700 dark:text-slate-300 font-medium",
+      meta: "text-slate-400 dark:text-slate-500",
+    };
+  }
+
+  // Si no requiere traducción, se rige por su estado normal
+  return getEstadoStyle(item.estado);
 }
 
 function getSelectEstadoStyle(estado) {
@@ -230,7 +306,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
       },
     });
 
-  const { mutate: solicitarTraduccionChecklistItem, isPending: enviandoATraduccion } =
+  const { mutate: solicitarTraduccionMutate, isPending: enviandoATraduccion } =
     useMutation({
       mutationFn: ({ itemId, prioridad, observaciones }) =>
         solicitarTraduccionChecklistItem(expedienteId, itemId, {
@@ -238,6 +314,27 @@ export default function DocumentacionExpediente({ expediente = {} }) {
           observaciones: `${observaciones ?? ""}`.trim() || undefined,
           usuario_id: usuarioId,
         }),
+      onMutate: async ({ itemId }) => {
+        const queryKey = queryKeys.expedienteChecklist.byExpediente(expedienteId);
+        await queryClient.cancelQueries({ queryKey });
+
+        const previousData = queryClient.getQueryData(queryKey);
+
+        queryClient.setQueryData(queryKey, (old) => {
+          if (!Array.isArray(old)) return old;
+          return old.map((item) =>
+            item.id === itemId
+              ? {
+                  ...item,
+                  estado_traduccion: "SOLICITADA",
+                  requiere_traduccion: true,
+                }
+              : item
+          );
+        });
+
+        return { previousData, queryKey };
+      },
       onSuccess: () => {
         toast.success(
           "Solicitud de traducción creada correctamente — el ítem será marcado como EN_TRADUCCION."
@@ -247,7 +344,10 @@ export default function DocumentacionExpediente({ expediente = {} }) {
           exact: false,
         });
       },
-      onError: (err) => {
+      onError: (err, variables, context) => {
+        if (context?.previousData) {
+          queryClient.setQueryData(context.queryKey, context.previousData);
+        }
         console.error("Error solicitando traducción del item:", err);
         toast.error(
           err?.message || "No se pudo enviar el documento a traducción."
@@ -770,7 +870,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
               key={categoria.id}
               className={`flex flex-col rounded-2xl border border-slate-200 bg-white ring-1 ring-slate-100 transition dark:border-slate-800 dark:bg-slate-900/40 dark:ring-slate-800 ${categoria.color.ring}`}
             >
-              <header className="flex items-start justify-between gap-3 border-b border-slate-200 p-4 dark:border-slate-800 xl:p-5">
+              <header className="flex items-start justify-between gap-3 border-b border-slate-200/80 bg-slate-100/70 p-4 dark:border-slate-800/60 dark:bg-slate-950/70 xl:p-5 rounded-t-2xl">
                 <div className="flex min-w-0 flex-1 items-start gap-3">
                   <div
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${categoria.color.badge} ${categoria.color.darkBadge}`}
@@ -793,29 +893,20 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                     <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
                       {categoria.descripcion}
                     </p>
-                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-slate-800">
-                      <div
-                        className="h-full rounded-full transition-all duration-700 ease-out"
-                        style={{
-                          width: `${statCat.pct}%`,
-                          backgroundColor: categoria.color.accent,
-                        }}
-                      />
-                    </div>
                   </div>
                 </div>
               </header>
 
-              <div className="flex flex-1 flex-col gap-3 p-4">
+              <div className="flex flex-1 flex-col divide-y divide-slate-100 dark:divide-slate-800/60 px-4 py-2">
                 {isLoading && !items.length ? (
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800/60">
                     {[0, 1].map((i) => (
                       <div
                         key={i}
-                        className="animate-pulse rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
+                        className="animate-pulse py-4 pl-3.5 border-l-[4px] border-l-slate-100 dark:border-l-slate-800"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 shrink-0 rounded-lg bg-slate-100 dark:bg-slate-800" />
+                          <div className="h-6 w-6 shrink-0 rounded-lg bg-slate-100 dark:bg-slate-800" />
                           <div className="flex-1 space-y-1.5">
                             <div className="h-3.5 w-4/5 rounded bg-slate-100 dark:bg-slate-800" />
                             <div className="h-3 w-1/2 rounded bg-slate-100 dark:bg-slate-800" />
@@ -827,151 +918,209 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                 ) : items.length ? (
                   <>
                     {items.map((item) => {
-                      const style = getEstadoStyle(item.estado);
+                      const style = getItemStyle(item, categoria.id);
                       const IconComp = style.icon;
                       const isDropdownOpen = openDropdownId === item.id;
-                      const requiereTraduccion = Boolean(item.requiere_traduccion);
+                      const requiereTraduccion = Boolean(item.requiere_traduccion) && categoria.id !== "formularios";
 
                       return (
                         <div
                           key={item.id}
                           className={`${
                             isDropdownOpen ? "z-40" : "z-0"
-                          } relative rounded-xl p-4 transition-all duration-300 hover:shadow-md ${style.container}`}
+                          } relative py-4 transition-all duration-200 hover:bg-slate-50/40 dark:hover:bg-slate-900/10 ${style.container}`}
                         >
-                          <div className="flex flex-col gap-3">
-                            <div className="flex items-start gap-3">
+                          <div className="flex items-start justify-between gap-4">
+                            {/* Left Side: Content & Badges */}
+                            <div className="flex items-start gap-3 min-w-0 flex-1">
                               <div
-                                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-xl ${style.iconBox}`}
+                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full mt-0.5 ${style.iconBox}`}
                               >
-                                <IconComp size={18} />
+                                <IconComp size={13} />
                               </div>
-                              <div className="min-w-0 flex-1">
+                              <div className="min-w-0 flex-1 space-y-2">
+                                <h4 className={`text-[13.5px] font-semibold leading-5 ${style.title}`}>
+                                  {item.titulo_requisito}
+                                </h4>
+
+                                {/* Badges Row */}
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <h4
-                                    className={`min-w-0 truncate text-[14px] font-semibold leading-5 ${style.title}`}
-                                  >
-                                    {item.titulo_requisito}
-                                  </h4>
-                                </div>
-
-                                <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                                  <div className="relative">
-                                    <button
-                                      type="button"
-                                      data-estado-selector-id={item.id}
-                                      disabled={actualizando}
-                                      onClick={() =>
-                                        setOpenDropdownId(
-                                          isDropdownOpen ? null : item.id
-                                        )
-                                      }
-                                      className={`inline-flex items-center gap-1.5 transition ${getSelectEstadoStyle(
+                                  {item.estado !== ESTADOS.RECIBIDO && (
+                                    <span
+                                      className={`inline-flex items-center gap-1.5 select-none ${getSelectEstadoStyle(
                                         item.estado
-                                      )} ${
-                                        actualizando
-                                          ? "opacity-60"
-                                          : "hover:brightness-110"
-                                      }`}
+                                      )}`}
                                     >
-                                      {actualizando ? (
-                                        <Loader2
-                                          size={12}
-                                          className="animate-spin"
-                                        />
-                                      ) : (
-                                        <span
-                                          className={`h-1.5 w-1.5 rounded-full ${style.dot}`}
-                                        />
-                                      )}
+                                      <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
                                       {formatEstadoLabel(item.estado)}
-                                    </button>
-                                  </div>
+                                    </span>
+                                  )}
 
-                                  {requiereTraduccion ? (
-                                    (() => {
-                                      const yaEnviado =
-                                        item.estado === ESTADOS.EN_TRADUCCION ||
-                                        item.estado === ESTADOS.TRADUCIDO ||
-                                        item.estado === ESTADOS.EN_QUALITY_TRADUCCION;
+                                  {requiereTraduccion && (() => {
+                                    const yaEnviado =
+                                      item.estado_traduccion &&
+                                      item.estado_traduccion !== "PENDIENTE_TRADUCCION" &&
+                                      item.estado_traduccion !== "NO_REQUIERE";
 
-                                      const labelBoton = enviandoATraduccion
-                                        ? "Enviando..."
-                                        : yaEnviado
-                                          ? formatEstadoLabel(item.estado)
-                                          : "Enviado a Traducción";
+                                    const formatEstadoTraduccionLabel = (estado) => {
+                                      const map = {
+                                        PENDIENTE_TRADUCCION: "Pendiente Enviar",
+                                        SOLICITADA: "Solicitada",
+                                        ASIGNADO_TRADUCTOR: "En Traducción",
+                                        QUALITY_DEVUELTO_TRADUCTOR: "Devuelto por Quality",
+                                        EN_QUALITY_PENDIENTE_ASIGNACION: "Listo para Quality",
+                                        ASIGNADO_QUALITY: "En Calidad (Quality)",
+                                        TRADUCIDO_Y_VERIFICADO: "Aprobada",
+                                        ILEGIBLE_DEVUELTO: "Devuelto (Ilegible)",
+                                        NO_REQUIERE: "No Requiere",
+                                        ILEGIBLE_CORREGIDO: "Ilegible Corregido",
+                                        CORREGIDO_TRADUCTOR_QUALITY: "Corregido por Traductor",
+                                      };
+                                      return map[estado] || estado || "Solicitada";
+                                    };
+
+                                    if (yaEnviado) {
+                                      const aprobado = item.estado_traduccion === "TRADUCIDO_Y_VERIFICADO";
+                                      const devuelto =
+                                         item.estado_traduccion === "ILEGIBLE_DEVUELTO" ||
+                                         item.estado_traduccion === "QUALITY_DEVUELTO_TRADUCTOR";
+                                      const badgeClasses = aprobado
+                                        ? "border-emerald-200 bg-emerald-100/50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300"
+                                        : devuelto
+                                          ? "border-rose-200 bg-rose-100/50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
+                                          : "border-amber-200 bg-amber-100/50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300";
 
                                       return (
                                         <span
-                                          className="inline-flex items-center gap-1.5 rounded-lg border border-[#0e183f]/40 bg-[#0e183f]/95 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white cursor-default select-none dark:border-[#0e183f]/60 dark:bg-[#0e183f]"
+                                          className={`inline-flex items-center gap-1 border px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide ${badgeClasses}`}
                                         >
-                                          {enviandoATraduccion ? (
-                                            <Loader2
-                                              size={11}
-                                              className="animate-spin"
-                                            />
-                                          ) : (
-                                            <Languages size={11} />
-                                          )}
-                                          {labelBoton}
+                                          <Languages size={10} />
+                                          {`Traducción: ${formatEstadoTraduccionLabel(item.estado_traduccion)}`}
                                         </span>
                                       );
-                                    })()
-                                  ) : null}
+                                    }
 
-                                  <button
-                                    type="button"
-                                    onClick={() => abrirModalEditar(item)}
-                                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 transition hover:border-[#0d1b5e] hover:text-[#0d1b5e] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                                  >
-                                    <Settings2 size={11} />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => eliminarDocumento(item)}
-                                    disabled={eliminandoItem}
-                                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-red-600 transition hover:border-red-400 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/50 dark:bg-slate-900 dark:text-red-300"
-                                  >
-                                    <Trash2 size={11} />
-                                  </button>
+                                    // Si requiere traducción pero aún no está en RECIBIDO, mostramos "Pendiente Recepción"
+                                    if (item.estado !== ESTADOS.RECIBIDO) {
+                                      return (
+                                        <span
+                                          title="El documento debe marcarse como RECIBIDO para poder enviarse a traducción"
+                                          className="inline-flex items-center gap-1 border border-slate-200 bg-slate-100 px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide text-slate-400 cursor-not-allowed select-none dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-600"
+                                        >
+                                          <Languages size={10} />
+                                          Pendiente Recepción
+                                        </span>
+                                      );
+                                    }
+
+                                    return null;
+                                  })()}
+
+                                  {!requiereTraduccion && (
+                                    <span className="inline-flex items-center gap-1 border border-slate-200/60 bg-slate-50/70 px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide text-slate-400 dark:border-slate-800 dark:bg-slate-900/30 dark:text-slate-500">
+                                      No requiere traducción
+                                    </span>
+                                  )}
                                 </div>
 
-                                {item.observaciones ? (
-                                  <p
-                                    className={`mt-2 text-[11px] leading-5 ${style.meta}`}
-                                  >
+                                {/* Observations */}
+                                {item.observaciones && item.observaciones !== "Aprobado por Quality" ? (
+                                  <p className={`text-[11px] leading-5 ${style.meta}`}>
                                     {item.observaciones}
                                   </p>
                                 ) : item.estado === ESTADOS.PENDIENTE ? (
-                                  <p
-                                    className={`mt-2 text-[11px] italic ${style.meta}`}
-                                  >
+                                  <p className={`text-[11px] italic ${style.meta}`}>
                                     Sin observaciones registradas
                                   </p>
                                 ) : null}
 
-                                <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-500 dark:text-slate-400">
+                                {/* Metadata updates */}
+                                <div className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-[9.5px] ${style.meta}`}>
                                   {item.usuario_actualizador ? (
-                                    <div className="flex items-center gap-1.5">
-                                      <User size={11} />
-                                      <span className="font-medium">
-                                        {item.usuario_actualizador}
-                                      </span>
+                                    <div className="flex items-center gap-1">
+                                      <User size={10} />
+                                      <span className="font-medium">{item.usuario_actualizador}</span>
                                     </div>
                                   ) : null}
                                   {item.updated_at ? (
-                                    <div className="flex items-center gap-1.5">
-                                      <Clock size={11} />
-                                      <span>
-                                        Actualizado:{" "}
-                                        <span className="font-semibold">
-                                          {item.updated_at}
-                                        </span>
-                                      </span>
+                                    <div className="flex items-center gap-1">
+                                      <Clock size={10} />
+                                      <span>Actualizado: <span className="font-medium">{item.updated_at}</span></span>
                                     </div>
                                   ) : null}
                                 </div>
                               </div>
+                            </div>
+
+                            {/* Right Side: Actions (Edit, Delete, Enviar Traducción) */}
+                            <div className="flex items-center gap-1.5 shrink-0 self-start mt-0.5">
+                              {/* Botón de Enviar a Traducción si ya está Recibido y requiere traducción pero no está enviado */}
+                              {requiereTraduccion && item.estado === ESTADOS.RECIBIDO && (
+                                (() => {
+                                  const yaEnviado =
+                                    item.estado_traduccion &&
+                                    item.estado_traduccion !== "PENDIENTE_TRADUCCION" &&
+                                    item.estado_traduccion !== "NO_REQUIERE";
+
+                                  if (!yaEnviado) {
+                                    return (
+                                      <button
+                                        type="button"
+                                        disabled={enviandoATraduccion}
+                                        onClick={() => {
+                                          abrirConfirmacion({
+                                            title: "Enviar a Traducción",
+                                            message: `¿Estás seguro de enviar "${item?.titulo_requisito ?? item?.nombre_documento ?? "este documento"}" a traducción?`,
+                                            confirmText: "Sí, enviar",
+                                            cancelText: "Cancelar",
+                                            variant: "primary",
+                                            icon: Languages,
+                                            onConfirm: () => solicitarTraduccionMutate({ itemId: item.id }),
+                                          });
+                                        }}
+                                        className="inline-flex items-center gap-1 rounded-lg border border-[#0e183f]/40 bg-[#0e183f]/95 px-2.5 py-1.5 text-[9.5px] font-bold uppercase tracking-wide text-white transition hover:bg-[#15235c] disabled:opacity-50 disabled:cursor-not-allowed dark:border-blue-900/40 dark:bg-[#0e183f]"
+                                      >
+                                        {enviandoATraduccion ? (
+                                          <Loader2 size={10} className="animate-spin" />
+                                        ) : (
+                                          <Languages size={10} />
+                                        )}
+                                        Enviar a Traducción
+                                      </button>
+                                    );
+                                  }
+                                  return null;
+                                })()
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => abrirModalEditar(item)}
+                                className={`inline-flex h-7 w-7 items-center justify-center rounded-lg border bg-white transition dark:bg-slate-900 ${
+                                  item.estado_traduccion === "TRADUCIDO_Y_VERIFICADO"
+                                    ? "border-emerald-200 text-emerald-600 hover:border-emerald-500 hover:bg-emerald-50 dark:border-emerald-900/50 dark:text-emerald-300 dark:hover:bg-emerald-950/20"
+                                    : item.estado_traduccion === "ILEGIBLE_DEVUELTO" ||
+                                      item.estado_traduccion === "QUALITY_DEVUELTO_TRADUCTOR"
+                                      ? "border-rose-200 text-rose-600 hover:border-rose-500 hover:bg-rose-50 dark:border-rose-900/50 dark:text-rose-300 dark:hover:bg-rose-950/20"
+                                      : requiereTraduccion &&
+                                        item.estado_traduccion &&
+                                        item.estado_traduccion !== "PENDIENTE_TRADUCCION" &&
+                                        item.estado_traduccion !== "NO_REQUIERE"
+                                        ? "border-amber-200 text-amber-600 hover:border-amber-500 hover:bg-amber-50 dark:border-amber-900/50 dark:text-amber-300 dark:hover:bg-amber-950/20"
+                                        : "border-slate-200 text-slate-600 hover:border-[#0d1b5e] hover:text-[#0d1b5e] hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                }`}
+                              >
+                                <Settings2 size={12} />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => eliminarDocumento(item)}
+                                disabled={eliminandoItem}
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-red-200 bg-white text-red-600 transition hover:border-red-400 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/50 dark:bg-slate-900 dark:text-red-300 dark:hover:bg-red-950/20"
+                              >
+                                <Trash2 size={12} />
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -980,7 +1129,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                     <button
                       type="button"
                       onClick={() => abrirModalAgregar(categoria.id)}
-                      className={`mt-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-dashed px-3 py-2 text-[11px] font-bold uppercase tracking-wide transition ${categoria.color.badge} ${categoria.color.darkBadge} hover:brightness-105`}
+                      className="mt-3.5 inline-flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-100/60 px-4 py-2.5 text-[10.5px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-700 transition dark:border-slate-800 dark:bg-slate-900/30 dark:hover:bg-slate-900/60 dark:text-slate-400 dark:hover:text-slate-200"
                     >
                       <Plus size={12} />
                       Agregar requisito
@@ -994,9 +1143,9 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                   >
                     <div>
                       <div
-                        className={`mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl border ${categoria.color.badge} ${categoria.color.darkBadge}`}
+                        className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
                       >
-                        <Plus size={16} />
+                        <Plus size={14} />
                       </div>
                       <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                         Sin requisitos
@@ -1014,74 +1163,6 @@ export default function DocumentacionExpediente({ expediente = {} }) {
         })}
       </div>
 
-      {openDropdownId
-        ? (() => {
-            const itemActivo = checklistVisible.find(
-              (item) => item.id === openDropdownId
-            );
-            const pos = dropdownPos[openDropdownId];
-
-            if (!itemActivo || !pos) return null;
-
-            const estadoActual = itemActivo.estado;
-
-            return createPortal(
-              <div
-                ref={dropdownContenedorRef}
-                className="fixed z-[9999] overflow-visible rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
-                style={{
-                  top: pos.top,
-                  left: Math.max(12, pos.left),
-                  width: Math.min(pos.width, 320),
-                }}
-              >
-                <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-800">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Cambiar estado
-                  </p>
-                </div>
-                <ul className="p-1">
-                  {ESTADOS_SELECTABLES.map((estadoOpt) => {
-                    const optStyle = getEstadoStyle(estadoOpt);
-                    const isCurrent = estadoOpt === estadoActual;
-
-                    return (
-                      <li key={estadoOpt}>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            cambiarEstado(itemActivo, estadoOpt)
-                          }
-                          className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition ${
-                            isCurrent
-                              ? "bg-slate-100 dark:bg-slate-800"
-                              : "hover:bg-slate-50 dark:hover:bg-slate-800/70"
-                          }`}
-                        >
-                          <span
-                            className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${optStyle.badge}`}
-                          >
-                            <span
-                              className={`h-1.5 w-1.5 rounded-full ${optStyle.dot}`}
-                            />
-                            {formatEstadoLabel(estadoOpt)}
-                          </span>
-                          {isCurrent ? (
-                            <CheckCircle2
-                              size={12}
-                              className="ml-auto text-emerald-500"
-                            />
-                          ) : null}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>,
-              document.body
-            );
-          })()
-        : null}
 
       {modalCategoriaId
         ? (() => {
@@ -1220,25 +1301,27 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                     </label>
                   ) : null}
 
-                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-white/50 p-4 transition hover:border-[#0d1b5e]/40 hover:bg-[#0d1b5e]/5 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-[#0d1b5e]/60 dark:hover:bg-[#0d1b5e]/10">
-                    <input
-                      type="checkbox"
-                      checked={modalRequiereTraduccion}
-                      onChange={(e) =>
-                        setModalRequiereTraduccion(e.target.checked)
-                      }
-                      className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 text-[#0d1b5e] focus:ring-[#0d1b5e]/30 dark:border-slate-700"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[12px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">
-                        ¿Documento requiere traducción?
-                      </p>
-                      <p className="mt-1 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
-                        Si lo marcas, después de guardar podrás enviar este
-                        documento a traducción desde la tarjeta.
-                      </p>
-                    </div>
-                  </label>
+                  {modalCategoriaId !== "formularios" && (
+                    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-white/50 p-4 transition hover:border-[#0d1b5e]/40 hover:bg-[#0d1b5e]/5 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-[#0d1b5e]/60 dark:hover:bg-[#0d1b5e]/10">
+                      <input
+                        type="checkbox"
+                        checked={modalRequiereTraduccion}
+                        onChange={(e) =>
+                          setModalRequiereTraduccion(e.target.checked)
+                        }
+                        className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 text-[#0d1b5e] focus:ring-[#0d1b5e]/30 dark:border-slate-700"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[12px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+                          ¿Documento requiere traducción?
+                        </p>
+                        <p className="mt-1 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
+                          Si lo marcas, después de guardar podrás enviar este
+                          documento a traducción desde la tarjeta.
+                        </p>
+                      </div>
+                    </label>
+                  )}
 
                   <label className="block">
                     <span className="mb-1.5 block text-[12px] font-semibold text-slate-600 dark:text-slate-300">
@@ -1314,25 +1397,27 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                 }
               >
                 <div className="space-y-5">
-                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-white/50 p-4 transition hover:border-[#0d1b5e]/40 hover:bg-[#0d1b5e]/5 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-[#0d1b5e]/60 dark:hover:bg-[#0d1b5e]/10">
-                    <input
-                      type="checkbox"
-                      checked={modalEditarReqTrad}
-                      onChange={(e) =>
-                        setModalEditarReqTrad(e.target.checked)
-                      }
-                      className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 text-[#0d1b5e] focus:ring-[#0d1b5e]/30 dark:border-slate-700"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[12px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">
-                        ¿Documento requiere traducción?
-                      </p>
-                      <p className="mt-1 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
-                        Actívalo para poder enviar este documento a traducción
-                        después.
-                      </p>
-                    </div>
-                  </label>
+                  {itemEditando?.categoria_ui !== "formularios" && (
+                    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-white/50 p-4 transition hover:border-[#0d1b5e]/40 hover:bg-[#0d1b5e]/5 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-[#0d1b5e]/60 dark:hover:bg-[#0d1b5e]/10">
+                      <input
+                        type="checkbox"
+                        checked={modalEditarReqTrad}
+                        onChange={(e) =>
+                          setModalEditarReqTrad(e.target.checked)
+                        }
+                        className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 text-[#0d1b5e] focus:ring-[#0d1b5e]/30 dark:border-slate-700"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[12px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+                          ¿Documento requiere traducción?
+                        </p>
+                        <p className="mt-1 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
+                          Actívalo para poder enviar este documento a traducción
+                          después.
+                        </p>
+                      </div>
+                    </label>
+                  )}
 
                   <label className="block">
                     <span className="mb-1.5 block text-[12px] font-semibold text-slate-600 dark:text-slate-300">

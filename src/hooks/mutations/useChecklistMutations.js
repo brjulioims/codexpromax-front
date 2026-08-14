@@ -49,6 +49,33 @@ export function useUpdateChecklistItemMutation(options = {}) {
   return useMutation({
     mutationFn: ({ expedienteId, itemId, payload }) =>
       updateChecklistItem(expedienteId, itemId, payload),
+    onMutate: async (variables) => {
+      const expedienteId =
+        variables?.expedienteId ??
+        variables?.payload?.expediente_id ??
+        null;
+      if (!expedienteId) return;
+
+      const queryKey = queryKeys.expedienteChecklist.byExpediente(expedienteId);
+      await queryClient.cancelQueries({ queryKey });
+
+      const previousData = queryClient.getQueryData(queryKey);
+
+      queryClient.setQueryData(queryKey, (old) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((item) =>
+          item.id === variables.itemId
+            ? {
+                ...item,
+                ...variables.payload,
+                estado: variables.payload.estado_diligenciamiento ?? item.estado,
+              }
+            : item
+        );
+      });
+
+      return { previousData, queryKey };
+    },
     onSuccess: (data, variables, context) => {
       const expedienteId =
         variables?.expedienteId ??
@@ -72,6 +99,9 @@ export function useUpdateChecklistItemMutation(options = {}) {
       }
     },
     onError: (error, variables, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
       if (typeof options.onError === "function") {
         options.onError(error, variables, context);
       }
@@ -85,6 +115,24 @@ export function useDeleteChecklistItemMutation(options = {}) {
   return useMutation({
     mutationFn: ({ expedienteId, docId }) =>
       deleteExpedienteDocumento(expedienteId, docId),
+    onMutate: async (variables) => {
+      const expedienteId = variables?.expedienteId ?? null;
+      if (!expedienteId) return;
+
+      const queryKey = queryKeys.expedienteChecklist.byExpediente(expedienteId);
+      await queryClient.cancelQueries({ queryKey });
+
+      const previousData = queryClient.getQueryData(queryKey);
+
+      queryClient.setQueryData(queryKey, (old) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter(
+          (item) => item.id !== variables.docId && item.doc_id !== variables.docId
+        );
+      });
+
+      return { previousData, queryKey };
+    },
     onSuccess: (data, variables, context) => {
       const expedienteId = variables?.expedienteId ?? null;
 
@@ -99,6 +147,9 @@ export function useDeleteChecklistItemMutation(options = {}) {
       }
     },
     onError: (error, variables, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
       if (typeof options.onError === "function") {
         options.onError(error, variables, context);
       }
