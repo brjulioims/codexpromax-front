@@ -42,7 +42,7 @@ function normalizeDocumento(item, categoria, index) {
       item?.titulo ??
       item?.documento ??
       "",
-    estado: item?.estado ?? "RECIBIDO",
+    estado: item?.estado ?? item?.estado_diligenciamiento ?? "RECIBIDO",
     observaciones: item?.observaciones ?? item?.descripcion ?? "",
     usuario_actualizador:
       item?.usuario_actualizador ?? item?.usuario ?? null,
@@ -76,6 +76,9 @@ export function useExpedienteChecklistQuery(expedienteId, options = {}) {
     queryKey: queryKeys.expedienteChecklist.byExpediente(expedienteId),
     queryFn: () => getExpedienteChecklist(expedienteId),
     enabled,
+    refetchInterval: 15000,
+    refetchIntervalInBackground: false,
+    staleTime: 5000,
     ...options,
   });
 }
