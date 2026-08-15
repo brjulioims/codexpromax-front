@@ -297,7 +297,7 @@ export default function ExpedienteAsignado() {
             <button
               type="button"
               onClick={() => setFilterOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0e183f] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#16245e]"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               <Filter size={16} />
               Filtros

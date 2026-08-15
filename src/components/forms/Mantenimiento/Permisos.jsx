@@ -921,7 +921,7 @@ export default function Permisos() {
       />
 
       <div className="overflow-x-auto">
-        <div className="inline-flex min-w-full gap-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-sm transition-colors duration-300">
+        <div className="inline-flex min-w-full items-center gap-1 rounded-lg border border-[#0a1233]/10 bg-gradient-to-r from-[#ffffff] to-[#ffffff]/85 p-2 transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900 dark:from-slate-900 dark:to-slate-900/85 dark:shadow-[0_8px_24px_rgba(2,6,23,0.45)]">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = tab.id === "permisos";
@@ -931,10 +931,10 @@ export default function Permisos() {
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
                 className={[
-                  "flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold whitespace-nowrap transition-all duration-200",
+                  "flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-black uppercase tracking-[0.08em] whitespace-nowrap transition-all duration-200",
                   isActive
-                    ? "bg-[#0d1b5e] text-white shadow-md"
-                    : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-800 dark:hover:text-slate-200",
+                    ? "text-[#fe7405] pl-3 border-l-[3px] border-l-[#fe7405] rounded-lg"
+                    : "pl-4 text-[#0a1233] hover:bg-slate-100 hover:text-[#0a1233] dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white",
                 ].join(" ")}
               >
                 <Icon size={16} />
