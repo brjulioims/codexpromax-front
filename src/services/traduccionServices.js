@@ -525,4 +525,49 @@ export async function reactivarTraduccionParalegal(expedienteId, documentoId, pa
   }
 }
 
+export async function getHistorialAsignadorTraduccion(usuarioId) {
+  try {
+    const response = await fetch(`/api/traducciones/historial-asignador?usuario_id=${usuarioId}`, {
+      method: "GET",
+      headers: buildHeaders(),
+      credentials: "include",
+    });
+    const data = await parseResponse(response, "obtener historial asignador traducción");
+    return data?.data ?? [];
+  } catch (error) {
+    console.error("Error consultando historial asignador traducción", error);
+    return [];
+  }
+}
+
+export async function reasignarTraductor(expedienteId, documentoId, payload) {
+  try {
+    const response = await fetch(`/api/expedientes/${expedienteId}/documentos/${documentoId}/traduccion/reasignar-traductor`, {
+      method: "PATCH",
+      headers: buildHeaders(true),
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+    return await parseResponse(response, "reasignar traductor");
+  } catch (error) {
+    console.error("Error reasignando traductor", error);
+    throw error;
+  }
+}
+
+export async function reasignarQuality(expedienteId, documentoId, payload) {
+  try {
+    const response = await fetch(`/api/expedientes/${expedienteId}/documentos/${documentoId}/traduccion/reasignar-quality`, {
+      method: "PATCH",
+      headers: buildHeaders(true),
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+    return await parseResponse(response, "reasignar quality traducción");
+  } catch (error) {
+    console.error("Error reasignando quality traducción", error);
+    throw error;
+  }
+}
+
 export { TRADUCCION_API_URL };

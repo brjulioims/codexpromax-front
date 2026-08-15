@@ -4,7 +4,9 @@ import {
   FileText,
   Search,
   PenTool,
-  UserCheck
+  UserCheck,
+  History,
+  RefreshCw
 } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -16,7 +18,10 @@ import {
   getPendientesRedactor,
   asignarRedactor,
   getPendientesQuality,
-  asignarQuality
+  asignarQuality,
+  getHistorialAsignadorRedaccion,
+  reasignarRedactor,
+  reasignarQuality
 } from "../../../services/redaccionServices";
 
 const renderEstadoBadge = (estado) => {
@@ -132,6 +137,14 @@ export default function AsignacionesRedaccion() {
     enabled: activeTab === "asignar_quality",
   });
 
+  const [isReassign, setIsReassign] = useState(false);
+
+  const queryHistorial = useQuery({
+    queryKey: ["redacciones", "historial-asignador", currentUserId],
+    queryFn: () => getHistorialAsignadorRedaccion(currentUserId),
+    enabled: activeTab === "historial" && Number.isFinite(currentUserId),
+  });
+
   // Active data selection
   const { currentData, isLoading } = useMemo(() => {
     if (activeTab === "asignar_redactor") {
@@ -140,11 +153,17 @@ export default function AsignacionesRedaccion() {
         isLoading: queryPendientesRedactor.isLoading
       };
     }
+    if (activeTab === "asignar_quality") {
+      return {
+        currentData: queryPendientesQuality.data ?? [],
+        isLoading: queryPendientesQuality.isLoading
+      };
+    }
     return {
-      currentData: queryPendientesQuality.data ?? [],
-      isLoading: queryPendientesQuality.isLoading
+      currentData: queryHistorial.data ?? [],
+      isLoading: queryHistorial.isLoading
     };
-  }, [activeTab, queryPendientesRedactor, queryPendientesQuality]);
+  }, [activeTab, queryPendientesRedactor, queryPendientesQuality, queryHistorial]);
 
   // Mutations
   const assignRedactorMutation = useMutation({
@@ -193,10 +212,65 @@ export default function AsignacionesRedaccion() {
     }
   });
 
+  const reasignarRedactorMutation = useMutation({
+    mutationFn: ({ expedienteId, payload }) =>
+      reasignarRedactor(expedienteId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["redacciones", "historial-asignador", currentUserId] });
+      Swal.fire({
+        title: "Reasignado",
+        text: "El redactor ha sido reasignado exitosamente.",
+        icon: "success",
+        confirmButtonColor: "#0e183f",
+      });
+      closeModal();
+    },
+    onError: (error) => {
+      Swal.fire({
+        title: "Error",
+        text: error.message || "Ocurrió un error al reasignar el redactor.",
+        icon: "error",
+        confirmButtonColor: "#0e183f",
+      });
+    }
+  });
+
+  const reasignarQualityMutation = useMutation({
+    mutationFn: ({ expedienteId, payload }) =>
+      reasignarQuality(expedienteId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["redacciones", "historial-asignador", currentUserId] });
+      Swal.fire({
+        title: "Reasignado",
+        text: "El revisor de Quality ha sido reasignado exitosamente.",
+        icon: "success",
+        confirmButtonColor: "#0e183f",
+      });
+      closeModal();
+    },
+    onError: (error) => {
+      Swal.fire({
+        title: "Error",
+        text: error.message || "Ocurrió un error al reasignar el revisor.",
+        icon: "error",
+        confirmButtonColor: "#0e183f",
+      });
+    }
+  });
+
   const handleOpenAssignRedactor = (ticket) => {
     setSelectedTicket(ticket);
     setSelectedUserId("");
     setObservaciones("");
+    setIsReassign(false);
+    setAssignRedactorOpen(true);
+  };
+
+  const handleOpenReassignRedactor = (ticket) => {
+    setSelectedTicket(ticket);
+    setSelectedUserId(ticket.redactor_id || "");
+    setObservaciones(ticket.observaciones || "");
+    setIsReassign(true);
     setAssignRedactorOpen(true);
   };
 
@@ -204,10 +278,20 @@ export default function AsignacionesRedaccion() {
     setSelectedTicket(ticket);
     setSelectedUserId("");
     setObservaciones("");
+    setIsReassign(false);
+    setAssignQualityOpen(true);
+  };
+
+  const handleOpenReassignQuality = (ticket) => {
+    setSelectedTicket(ticket);
+    setSelectedUserId(ticket.quality_id || "");
+    setObservaciones(ticket.observaciones || "");
+    setIsReassign(true);
     setAssignQualityOpen(true);
   };
 
   const closeModal = () => {
+    setIsReassign(false);
     setAssignRedactorOpen(false);
     setAssignQualityOpen(false);
     setSelectedTicket(null);
@@ -218,29 +302,51 @@ export default function AsignacionesRedaccion() {
   const handleAssignRedactorSubmit = (e) => {
     e.preventDefault();
     if (!selectedTicket || !selectedUserId) return;
-    assignRedactorMutation.mutate({
-      expedienteId: selectedTicket.expediente_id,
-      payload: {
-        redaccion_id: selectedTicket.id || selectedTicket.redaccion_id,
-        redactor_id: Number(selectedUserId),
-        usuario_id: currentUserId,
-        observaciones: observaciones.trim()
-      }
-    });
+
+    const payload = {
+      redaccion_id: selectedTicket.id || selectedTicket.redaccion_id,
+      usuario_id: currentUserId,
+      observaciones: observaciones.trim()
+    };
+
+    if (isReassign) {
+      payload.nuevo_redactor_id = Number(selectedUserId);
+      reasignarRedactorMutation.mutate({
+        expedienteId: selectedTicket.expediente_id,
+        payload
+      });
+    } else {
+      payload.redactor_id = Number(selectedUserId);
+      assignRedactorMutation.mutate({
+        expedienteId: selectedTicket.expediente_id,
+        payload
+      });
+    }
   };
 
   const handleAssignQualitySubmit = (e) => {
     e.preventDefault();
     if (!selectedTicket || !selectedUserId) return;
-    assignQualityMutation.mutate({
-      expedienteId: selectedTicket.expediente_id,
-      payload: {
-        redaccion_id: selectedTicket.id || selectedTicket.redaccion_id,
-        quality_id: Number(selectedUserId),
-        usuario_id: currentUserId,
-        observaciones: observaciones.trim()
-      }
-    });
+
+    const payload = {
+      redaccion_id: selectedTicket.id || selectedTicket.redaccion_id,
+      usuario_id: currentUserId,
+      observaciones: observaciones.trim()
+    };
+
+    if (isReassign) {
+      payload.nuevo_quality_id = Number(selectedUserId);
+      reasignarQualityMutation.mutate({
+        expedienteId: selectedTicket.expediente_id,
+        payload
+      });
+    } else {
+      payload.quality_id = Number(selectedUserId);
+      assignQualityMutation.mutate({
+        expedienteId: selectedTicket.expediente_id,
+        payload
+      });
+    }
   };
 
   // Filter items
@@ -302,7 +408,7 @@ export default function AsignacionesRedaccion() {
           )
         }
       );
-    } else {
+    } else if (activeTab === "asignar_quality") {
       base.push(
         {
           header: "Redactor",
@@ -315,6 +421,36 @@ export default function AsignacionesRedaccion() {
         },
         {
           header: "Fecha Envío",
+          accessor: "updated_at",
+          render: (val) => (
+            <span className="text-xs font-semibold text-slate-500">
+              {val ? new Date(val).toLocaleDateString() : "-"}
+            </span>
+          )
+        }
+      );
+    } else {
+      base.push(
+        {
+          header: "Redactor",
+          accessor: "redactor_nombre",
+          render: (val) => (
+            <span className="inline-flex rounded bg-blue-50 dark:bg-blue-950/30 px-2 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300">
+              {val || "-"}
+            </span>
+          )
+        },
+        {
+          header: "Revisor Quality",
+          accessor: "quality_nombre",
+          render: (val) => (
+            <span className="inline-flex rounded bg-purple-50 dark:bg-purple-950/30 px-2 py-1 text-xs font-semibold text-purple-700 dark:text-purple-300">
+              {val || "-"}
+            </span>
+          )
+        },
+        {
+          header: "Fecha Asignación",
           accessor: "updated_at",
           render: (val) => (
             <span className="text-xs font-semibold text-slate-500">
@@ -388,6 +524,22 @@ export default function AsignacionesRedaccion() {
           <UserCheck size={16} />
           Asignación de Quality
         </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("historial");
+            setSearchQuery("");
+          }}
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-all ${
+            activeTab === "historial"
+              ? "border-[#fe7405] text-[#fe7405]"
+              : "border-transparent text-slate-500 hover:text-slate-700"
+          }`}
+        >
+          <History size={16} />
+          Historial de Asignaciones
+        </button>
       </div>
 
       {/* Table Section */}
@@ -419,6 +571,33 @@ export default function AsignacionesRedaccion() {
                 ASIGNAR QUALITY
               </button>
             )}
+
+            {activeTab === "historial" && (() => {
+              const isFinished = ["APROBADO_QUALITY", "APROBADA_QUALITY", "APROBADA", "REDACCION_APROBADA", "ENVIADO_TRADUCCION", "ENVIADO_A_TRADUCCION"].includes(row.estado_redaccion);
+              if (isFinished) {
+                return <span className="text-xs text-slate-400 italic">Completado</span>;
+              }
+              return (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenReassignRedactor(row)}
+                    className="inline-flex h-8 items-center justify-center gap-1 rounded bg-[#fe7405] px-2 py-0.5 text-[10px] font-bold text-white shadow-sm transition hover:bg-[#e06300] active:scale-95"
+                  >
+                    <RefreshCw size={10} />
+                    REASIGNAR REDACTOR
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenReassignQuality(row)}
+                    className="inline-flex h-8 items-center justify-center gap-1 rounded bg-[#0e183f] px-2 py-0.5 text-[10px] font-bold text-white shadow-sm transition hover:bg-[#1a2d69] active:scale-95"
+                  >
+                    <RefreshCw size={10} />
+                    REASIGNAR QUALITY
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         )}
       />
@@ -431,7 +610,7 @@ export default function AsignacionesRedaccion() {
           size="md"
           header={
             <div>
-              <h3 className="text-md font-bold uppercase tracking-wide">Asignar Redactor</h3>
+              <h3 className="text-md font-bold uppercase tracking-wide">{isReassign ? "Reasignar Redactor" : "Asignar Redactor"}</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">Expediente: {selectedTicket.codigo_expediente}</p>
             </div>
           }
@@ -471,10 +650,14 @@ export default function AsignacionesRedaccion() {
                 <button type="button" onClick={closeModal} className="h-10 rounded-lg px-4 text-sm font-semibold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">Cancelar</button>
                 <button
                   type="submit"
-                  disabled={assignRedactorMutation.isPending}
+                  disabled={assignRedactorMutation.isPending || reasignarRedactorMutation.isPending}
                   className="h-10 rounded-lg bg-[#fe7405] px-5 text-sm font-semibold text-white shadow hover:bg-[#e06300] transition disabled:opacity-50"
                 >
-                  {assignRedactorMutation.isPending ? "Asignando..." : "Asignar"}
+                  {assignRedactorMutation.isPending || reasignarRedactorMutation.isPending
+                    ? "Asignando..."
+                    : isReassign
+                    ? "Reasignar"
+                    : "Asignar"}
                 </button>
               </div>
           </form>
@@ -489,7 +672,7 @@ export default function AsignacionesRedaccion() {
           size="md"
           header={
             <div>
-              <h3 className="text-md font-bold uppercase tracking-wide">Asignar Revisor de Quality</h3>
+              <h3 className="text-md font-bold uppercase tracking-wide">{isReassign ? "Reasignar Revisor Quality" : "Asignar Revisor de Quality"}</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">Expediente: {selectedTicket.codigo_expediente}</p>
             </div>
           }
@@ -529,10 +712,14 @@ export default function AsignacionesRedaccion() {
                 <button type="button" onClick={closeModal} className="h-10 rounded-lg px-4 text-sm font-semibold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">Cancelar</button>
                 <button
                   type="submit"
-                  disabled={assignQualityMutation.isPending}
+                  disabled={assignQualityMutation.isPending || reasignarQualityMutation.isPending}
                   className="h-10 rounded-lg bg-[#0e183f] px-5 text-sm font-semibold text-white shadow hover:bg-[#1a2d69] transition disabled:opacity-50"
                 >
-                  {assignQualityMutation.isPending ? "Asignando..." : "Asignar"}
+                  {assignQualityMutation.isPending || reasignarQualityMutation.isPending
+                    ? "Asignando..."
+                    : isReassign
+                    ? "Reasignar"
+                    : "Asignar"}
                 </button>
               </div>
           </form>
