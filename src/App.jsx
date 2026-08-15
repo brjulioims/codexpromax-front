@@ -8,7 +8,6 @@ import MainLayout from "./components/layout/MainLayout";
 import ProtectedRoute from "./components/routes/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Permisos from "./components/forms/Mantenimiento/Permisos";
-import GestionClientes from "./components/forms/GestionClientes/GestionClientes";
 import DetalleCliente from "./components/forms/DetalleCliente/DetalleCliente";
 import ExpedienteAsignado from "./components/forms/qualityAsignador/ExpedienteAsignado";
 import ExpedienteSinAsignar from "./components/forms/qualityAsignador/ExpedienteSinAsignar";
@@ -114,14 +113,6 @@ export default function App() {
             element={
               <LayoutShell>
                 <Permisos />
-              </LayoutShell>
-            }
-          />
-          <Route
-            path="/clientes"
-            element={
-              <LayoutShell>
-                <GestionClientes />
               </LayoutShell>
             }
           />

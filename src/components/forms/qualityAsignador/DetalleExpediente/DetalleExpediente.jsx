@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   BriefcaseBusiness,
   FileText,
@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { useExpedienteChecklistQuery } from "../../../../hooks/queries/useExpedienteChecklistQuery";
 import HeaderBox from "../../../ui/HeaderBox";
 import DocumentacionExpediente from "./DocumentacionExpediente";
 
@@ -22,61 +21,7 @@ export default function DetalleExpediente() {
   const { state } = useLocation();
   const expediente = state?.expediente ?? {};
   const [activeTab, setActiveTab] = useState("basica");
-
-  const expedienteId = expediente?.id ?? expediente?.expedienteId ?? null;
-  const {
-    data: checklist = [],
-    isLoading: checklistCargando,
-  } = useExpedienteChecklistQuery(expedienteId, {
-    staleTime: 1000 * 60 * 2,
-  });
-
   const nombre = expediente.nombre || "Detalle del expediente";
-
-  const calculoAvanceChecklist = useMemo(() => {
-    if (!Array.isArray(checklist) || checklist.length === 0) {
-      return checklistCargando ? undefined : null;
-    }
-
-    const total = checklist.length;
-    if (total === 0) return null;
-    const estaCompletado = (est) =>
-      est === "RECIBIDO" || est === "NO_APLICA";
-    const completados = checklist.filter((i) =>
-      estaCompletado(i.estado)
-    ).length;
-    return {
-      pct: (completados / total) * 100,
-      recibidos: completados,
-      completados,
-      total,
-    };
-  }, [checklist, checklistCargando]);
-
-  const fallbackAvance = (() => {
-    const avanceDoc = expediente.avanceDocumental;
-    const avanceNumerico =
-      typeof avanceDoc === "number"
-        ? avanceDoc
-        : typeof avanceDoc === "string" &&
-            avanceDoc !== "" &&
-            avanceDoc !== "No registrado"
-          ? parseFloat(avanceDoc)
-          : null;
-    const valido = avanceNumerico !== null && !isNaN(avanceNumerico);
-    return valido
-      ? {
-          pct: Math.min(100, Math.max(0, avanceNumerico)),
-        }
-      : null;
-  })();
-
-  const avanceResultado =
-    calculoAvanceChecklist === undefined
-      ? null
-      : calculoAvanceChecklist ?? fallbackAvance;
-  const avanceValido = avanceResultado !== null;
-  const avancePorcentaje = avanceValido ? Math.round(avanceResultado.pct) : 0;
 
   // Determinar color de prioridad
   const getPrioridadBadge = (prioridad) => {
@@ -120,59 +65,38 @@ export default function DetalleExpediente() {
 
       {/* FILA UNIFICADA: TABS (IZQUIERDA) Y AVANCE (DERECHA) */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {/* SELECTOR DE PESTAÑAS TIPO iOS / SEGMENTED CONTROL */}
-        <div className="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-900 self-start">
+        {/* SELECTOR DE PESTAÑAS CON FONDO AZUL + PESTAÑA ACTIVA NARANJA */}
+        <div className="inline-flex items-center gap-1 rounded-xl border border-[#0a1233]/10 bg-gradient-to-r from-[#ffffff] to-[#ffffff]/85 px-2 py-2 shadow-[0_8px_24px_rgba(10,18,51,0.18)] self-start">
           <button
             type="button"
             onClick={() => setActiveTab("basica")}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-black uppercase tracking-[0.08em] transition-all duration-200 ${
               activeTab === "basica"
-                ? "bg-white text-slate-800 shadow-sm dark:bg-slate-800 dark:text-white"
-                : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                ? "text-[#fe7405] pl-3 border-l-[3px] border-l-[#fe7405] rounded-lg"
+                : "text-[#0a1233] hover:text-[#0a1233] hover:bg-slate-100 pl-4"
             }`}
           >
-            <BriefcaseBusiness size={14} />
+            <BriefcaseBusiness size={16} strokeWidth={2.2} />
             Información General
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("documentacion")}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-black uppercase tracking-[0.08em] transition-all duration-200 ${
               activeTab === "documentacion"
-                ? "bg-white text-slate-800 shadow-sm dark:bg-slate-800 dark:text-white"
-                : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                ? "text-[#fe7405] pl-3 border-l-[3px] border-l-[#fe7405] rounded-lg"
+                : "text-[#0a1233] hover:text-[#0a1233] hover:bg-slate-100 pl-4"
             }`}
           >
-            <FileText size={14} />
+            <FileText size={16} strokeWidth={2.2} />
             Requisitos del Expediente
           </button>
         </div>
-
-        {/* METRICA DE AVANCE */}
-        {avanceValido && (
-          <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-2.5 dark:border-slate-800/40 dark:bg-slate-900/30 self-start sm:self-auto">
-            <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/20">
-              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                {avancePorcentaje}%
-              </span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                Avance Documental
-              </p>
-              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                {avanceResultado.completados !== undefined
-                  ? `${avanceResultado.completados} de ${avanceResultado.total} requisitos`
-                  : "Porcentaje calculado"}
-              </p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* CONTENIDO PRINCIPAL */}
       {activeTab === "basica" ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* PANEL: DETALLES DEL PROCESO */}
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
             <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">

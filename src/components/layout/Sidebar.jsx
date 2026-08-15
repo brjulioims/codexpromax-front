@@ -42,13 +42,6 @@ const SIDEBAR_ITEMS = [
     ],
   },
   {
-    code: "clientes",
-    icon: UserRoundSearch,
-    label: "G. Clientes",
-    activeMatch: ["/clientes"],
-    route: "/clientes",
-  },
-  {
     code: "quality_asignador",
     icon: UserRoundSearch,
     label: "Quality / Asignador",

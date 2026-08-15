@@ -5,7 +5,6 @@ import {
   useCreateUsuarioMutation,
   useUpdateUsuarioEstadoMutation,
   useUpdateUsuarioMutation,
-  useUpdateUsuarioPasswordMutation,
 } from "../../mutations/useUsuariosMutations";
 import {
   DEFAULT_FILTERS,
@@ -93,12 +92,6 @@ export function useUsuariosPage() {
   });
   const updateStatusMutation = useUpdateUsuarioEstadoMutation();
 
-  const updatePasswordMutation = useUpdateUsuarioPasswordMutation({
-    onSuccess: () => {
-      setDraftPassword("");
-    },
-  });
-
   const handleCreateUser = async () => {
     const selectedRoleObj = rawRoles.find(
       (r) => r.nombre === draftNewUser.role
@@ -127,19 +120,19 @@ export function useUsuariosPage() {
       email: draftUser.email,
       username: draftUser.username,
       rol_id: selectedRoleObj ? selectedRoleObj.id : null,
+      ...(draftPassword.trim()
+        ? {
+            password: draftPassword.trim(),
+            contrasena: draftPassword.trim(),
+          }
+        : {}),
     };
 
     await updateMutation.mutateAsync({
       id: draftUser.id,
       payload,
     });
-
-    if (draftPassword.trim()) {
-      await updatePasswordMutation.mutateAsync({
-        id: draftUser.id,
-        password: draftPassword.trim(),
-      });
-    }
+    setDraftPassword("");
 
     await Swal.fire({
       title: "CAMBIOS GUARDADOS",
@@ -187,7 +180,7 @@ export function useUsuariosPage() {
       await Swal.fire({
         icon: "error",
         title: "Error",
-        text: "No se pudo cambiar el estado del usuario.",
+        text: "No se pudo cambiar el estado del usuario." + (error?.message || "Ocurrió un error inesperado."),
         confirmButtonColor: "#0e183f",
       });
     }

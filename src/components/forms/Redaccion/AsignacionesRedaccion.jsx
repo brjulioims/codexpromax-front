@@ -356,20 +356,20 @@ export default function AsignacionesRedaccion() {
       />
 
       {/* Tabs */}
-      <div className="flex flex-wrap border-b border-slate-200 dark:border-slate-800">
+      <div className="inline-flex items-center gap-1 rounded-xl border border-[#0a1233]/10 bg-gradient-to-r from-[#ffffff] to-[#ffffff]/85 px-2 py-2 shadow-[0_8px_24px_rgba(10,18,51,0.18)]">
         <button
           type="button"
           onClick={() => {
             setActiveTab("asignar_redactor");
             setSearchQuery("");
           }}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-all ${
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-black uppercase tracking-[0.08em] transition-all duration-200 ${
             activeTab === "asignar_redactor"
-              ? "border-[#fe7405] text-[#fe7405]"
-              : "border-transparent text-slate-500 hover:text-slate-700"
+              ? "text-[#fe7405] pl-3 border-l-[3px] border-l-[#fe7405] rounded-lg"
+              : "text-[#0a1233] hover:text-[#0a1233] hover:bg-slate-100 pl-4"
           }`}
         >
-          <PenTool size={16} />
+          <PenTool size={16} strokeWidth={2.2} />
           Asignación de Redactor
         </button>
 
@@ -379,13 +379,13 @@ export default function AsignacionesRedaccion() {
             setActiveTab("asignar_quality");
             setSearchQuery("");
           }}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-all ${
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-black uppercase tracking-[0.08em] transition-all duration-200 ${
             activeTab === "asignar_quality"
-              ? "border-[#fe7405] text-[#fe7405]"
-              : "border-transparent text-slate-500 hover:text-slate-700"
+              ? "text-[#fe7405] pl-3 border-l-[3px] border-l-[#fe7405] rounded-lg"
+              : "text-[#0a1233] hover:text-[#0a1233] hover:bg-slate-100 pl-4"
           }`}
         >
-          <UserCheck size={16} />
+          <UserCheck size={16} strokeWidth={2.2} />
           Asignación de Quality
         </button>
       </div>
