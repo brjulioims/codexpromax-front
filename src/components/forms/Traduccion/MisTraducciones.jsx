@@ -8,6 +8,7 @@ import {
   ExternalLink,
   BookOpen
 } from "lucide-react";
+import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 
 import HeaderBox from "../../ui/HeaderBox";
@@ -77,12 +78,7 @@ export default function MisTraducciones() {
       marcarIlegibleTraductor(expedienteId, documentoId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["traducciones", "traductor", currentUserId] });
-      Swal.fire({
-        title: "Reportado",
-        text: "El documento ha sido marcado como ilegible y devuelto al Paralegal.",
-        icon: "success",
-        confirmButtonColor: "#fe7405",
-      });
+      toast.success("El documento ha sido marcado como ilegible y devuelto al Paralegal.");
       closeModal();
     },
     onError: (error) => {
@@ -101,12 +97,7 @@ export default function MisTraducciones() {
       enviarTraduccionQualityTraductor(expedienteId, documentoId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["traducciones", "traductor", currentUserId] });
-      Swal.fire({
-        title: "Enviado",
-        text: "La traducción ha sido enviada a revisión de Quality Control.",
-        icon: "success",
-        confirmButtonColor: "#fe7405",
-      });
+      toast.success("La traduccion ha sido enviada a revision de Quality Control.");
       closeModal();
     },
     onError: (error) => {
@@ -416,3 +407,4 @@ export default function MisTraducciones() {
     </section>
   );
 }
+

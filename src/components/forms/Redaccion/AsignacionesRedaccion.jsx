@@ -492,7 +492,7 @@ export default function AsignacionesRedaccion() {
       />
 
       {/* Tabs */}
-      <div className="inline-flex items-center gap-1 rounded-xl border border-[#0a1233]/10 bg-gradient-to-r from-[#ffffff] to-[#ffffff]/85 px-2 py-2 shadow-[0_8px_24px_rgba(10,18,51,0.18)]">
+      <div className="inline-flex items-center gap-1 rounded-xl border border-[#0a1233]/10 bg-gradient-to-r from-[#ffffff] to-[#ffffff]/85 px-2 py-2 shadow-[0_8px_24px_rgba(10,18,51,0.18)] dark:border-slate-800 dark:bg-slate-900 dark:from-slate-900 dark:to-slate-900/85 dark:shadow-[0_8px_24px_rgba(2,6,23,0.45)]">
         <button
           type="button"
           onClick={() => {
@@ -502,7 +502,7 @@ export default function AsignacionesRedaccion() {
           className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-black uppercase tracking-[0.08em] transition-all duration-200 ${
             activeTab === "asignar_redactor"
               ? "text-[#fe7405] pl-3 border-l-[3px] border-l-[#fe7405] rounded-lg"
-              : "text-[#0a1233] hover:text-[#0a1233] hover:bg-slate-100 pl-4"
+              : "text-[#0a1233] hover:text-[#0a1233] hover:bg-slate-100 dark:text-slate-200 dark:hover:text-white dark:hover:bg-slate-800 pl-4"
           }`}
         >
           <PenTool size={16} strokeWidth={2.2} />
@@ -518,7 +518,7 @@ export default function AsignacionesRedaccion() {
           className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-black uppercase tracking-[0.08em] transition-all duration-200 ${
             activeTab === "asignar_quality"
               ? "text-[#fe7405] pl-3 border-l-[3px] border-l-[#fe7405] rounded-lg"
-              : "text-[#0a1233] hover:text-[#0a1233] hover:bg-slate-100 pl-4"
+              : "text-[#0a1233] hover:text-[#0a1233] hover:bg-slate-100 dark:text-slate-200 dark:hover:text-white dark:hover:bg-slate-800 pl-4"
           }`}
         >
           <UserCheck size={16} strokeWidth={2.2} />

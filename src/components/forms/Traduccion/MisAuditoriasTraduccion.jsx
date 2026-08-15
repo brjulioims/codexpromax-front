@@ -9,6 +9,7 @@ import {
   Download,
   Eye
 } from "lucide-react";
+import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 
 import HeaderBox from "../../ui/HeaderBox";
@@ -77,12 +78,7 @@ export default function MisAuditoriasTraduccion() {
       aprobarTraduccionQuality(expedienteId, documentoId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["traducciones", "quality", currentUserId] });
-      Swal.fire({
-        title: "Aprobado",
-        text: "La traducción ha sido aprobada y verificada exitosamente.",
-        icon: "success",
-        confirmButtonColor: "#fe7405",
-      });
+      toast.success("La traduccion ha sido aprobada y verificada exitosamente.");
       closeModal();
     },
     onError: (error) => {
@@ -100,12 +96,7 @@ export default function MisAuditoriasTraduccion() {
       rechazarTraduccionQuality(expedienteId, documentoId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["traducciones", "quality", currentUserId] });
-      Swal.fire({
-        title: "Rechazado",
-        text: "La traducción ha sido rechazada y devuelta al traductor.",
-        icon: "success",
-        confirmButtonColor: "#fe7405",
-      });
+      toast.success("La traduccion ha sido rechazada y devuelta al traductor.");
       closeModal();
     },
     onError: (error) => {
@@ -408,3 +399,6 @@ export default function MisAuditoriasTraduccion() {
     </section>
   );
 }
+
+
+
