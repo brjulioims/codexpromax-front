@@ -284,12 +284,16 @@ export default function ExpedienteAsignado() {
     <section className="w-full space-y-5">
       <HeaderBox
         Icon={BriefcaseBusiness}
-        title={<span className="block">{nombre}</span>}
+        title={
+          <span className="inline-flex items-center gap-3">
+            <span>{nombre}</span>
+            <span className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-semibold normal-case tracking-normal text-[#0e183f]">
+              Total registros: {filteredExpedientes.length}
+            </span>
+          </span>
+        }
         action={
           <div className="flex flex-wrap items-center justify-end gap-3">
-            <div className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-[#0e183f]">
-              Registrados: {filteredExpedientes.length}
-            </div>
             <button
               type="button"
               onClick={() => setFilterOpen(true)}
@@ -302,28 +306,7 @@ export default function ExpedienteAsignado() {
         }
       />
 
-      <div className="space-y-5">
-        <div className="relative w-full max-w-[260px] overflow-hidden rounded-xl bg-white px-5 py-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-100">
-          <div className="absolute right-[-18px] top-[-28px] h-28 w-28 rounded-full bg-slate-100/70" />
-          <div className="relative flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                Total expedientes
-              </p>
-              <p className="mt-2 text-4xl font-bold leading-none text-[#0d1b5e]">
-                {filteredExpedientes.length}
-              </p>
-              <p className="mt-2 max-w-[150px] text-sm leading-5 text-slate-500">
-                Expedientes asignados en el sistema
-              </p>
-            </div>
-            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm">
-              <BriefcaseBusiness size={20} />
-            </div>
-          </div>
-        </div>
-
-        <Table
+      <Table
           columns={columns}
           data={filteredExpedientes}
           loading={isLoading}
@@ -348,7 +331,6 @@ export default function ExpedienteAsignado() {
           variant="card"
           tableClassName="w-full text-sm text-[#101a3c]"
         />
-      </div>
 
       <ModalFiltro
         open={filterOpen}

@@ -509,4 +509,20 @@ export async function enviarTraduccionQualityTraductor(expedienteId, documentoId
   }
 }
 
+export async function reactivarTraduccionParalegal(expedienteId, documentoId, payload) {
+  try {
+    const response = await fetch(`/api/expedientes/${expedienteId}/documentos/${documentoId}/traduccion/reactivar-paralegal`, {
+      method: "POST",
+      headers: buildHeaders(true),
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+
+    return await parseResponse(response, "reactivar traducción paralegal");
+  } catch (error) {
+    console.error("Error reactivando traducción paralegal", error);
+    throw error;
+  }
+}
+
 export { TRADUCCION_API_URL };
