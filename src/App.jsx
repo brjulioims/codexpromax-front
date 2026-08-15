@@ -17,6 +17,9 @@ import Usuario from "./components/forms/Mantenimiento/Usuario";
 import AsignacionesTraduccion from "./components/forms/Traduccion/AsignacionesTraduccion";
 import MisAuditoriasTraduccion from "./components/forms/Traduccion/MisAuditoriasTraduccion";
 import MisTraducciones from "./components/forms/Traduccion/MisTraducciones";
+import AsignacionesRedaccion from "./components/forms/Redaccion/AsignacionesRedaccion";
+import MisAuditoriasRedaccion from "./components/forms/Redaccion/MisAuditoriasRedaccion";
+import MisRedacciones from "./components/forms/Redaccion/MisRedacciones";
 
 
 import { hasPendingAzureLogin } from "./services/loginAzureService";
@@ -151,6 +154,30 @@ export default function App() {
             element={
               <LayoutShell>
                 <MisTraducciones />
+              </LayoutShell>
+            }
+          />
+          <Route
+            path="/asignaciones-redaccion"
+            element={
+              <LayoutShell>
+                <AsignacionesRedaccion />
+              </LayoutShell>
+            }
+          />
+          <Route
+            path="/mis_auditorias_redaccion"
+            element={
+              <LayoutShell>
+                <MisAuditoriasRedaccion />
+              </LayoutShell>
+            }
+          />
+          <Route
+            path="/mis_redacciones"
+            element={
+              <LayoutShell>
+                <MisRedacciones />
               </LayoutShell>
             }
           />

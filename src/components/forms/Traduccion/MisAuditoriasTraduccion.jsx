@@ -38,7 +38,7 @@ const renderEstadoBadge = (estado) => {
   const config = map[estado] || { text: estado || "Desconocido", classes: "bg-slate-100 text-slate-800 dark:bg-slate-800/40 dark:text-slate-400" };
 
   return (
-    <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold tracking-wide transition-colors ${config.classes}`}>
+    <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide transition-colors ${config.classes}`}>
       {config.text}
     </span>
   );
@@ -303,22 +303,22 @@ export default function MisAuditoriasTraduccion() {
           <div className="space-y-4 max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4 text-sm border-b border-slate-100 dark:border-slate-800 pb-4">
                 <div>
-                  <span className="block text-xs font-semibold text-slate-400 uppercase">Cliente</span>
+                  <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Cliente</span>
                   <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedDoc.cliente_nombre || "-"}</span>
                 </div>
                 <div>
-                  <span className="block text-xs font-semibold text-slate-400 uppercase">Traductor</span>
+                  <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Traductor</span>
                   <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedDoc.traductor_nombre || "-"}</span>
                 </div>
                 <div className="col-span-2">
-                  <span className="block text-xs font-semibold text-slate-400 uppercase">Documento original</span>
+                  <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Documento original</span>
                   <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedDoc.nombre_documento || "-"}</span>
                 </div>
               </div>
 
               {/* Descargas */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold text-slate-400 tracking-wider uppercase">Archivos</h4>
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Archivos</span>
                 <div className="flex flex-col gap-2">
                   {selectedDoc.archivo_url && (
                     <a
@@ -331,7 +331,7 @@ export default function MisAuditoriasTraduccion() {
                       <ExternalLink size={16} className="shrink-0 text-slate-400" />
                     </a>
                   )}
-                  {selectedDoc.archivo_traduccion_url ? (
+                  {selectedDoc.archivo_traduccion_url && (
                     <a
                       href={selectedDoc.archivo_traduccion_url}
                       target="_blank"
@@ -341,36 +341,32 @@ export default function MisAuditoriasTraduccion() {
                       <span className="font-bold truncate pr-4 text-left">Traducción Recibida</span>
                       <Download size={16} className="shrink-0 text-orange-500" />
                     </a>
-                  ) : (
-                    <div className="rounded-lg border border-dashed border-rose-200 dark:border-rose-950 bg-rose-50/30 p-3 text-center text-xs text-rose-500 font-semibold uppercase">
-                      No se ha cargado traducción aún.
-                    </div>
                   )}
                 </div>
               </div>
 
               {/* Notas anteriores */}
-              {selectedDoc.notas_traduccion && (
+              {selectedDoc.notes_traduccion || selectedDoc.notas_traduccion ? (
                 <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-3 text-xs">
-                  <span className="block font-bold text-slate-500 uppercase mb-1">Historial de Observaciones</span>
-                  <pre className="whitespace-pre-wrap font-sans text-slate-600 dark:text-slate-400">{selectedDoc.notas_traduccion}</pre>
+                  <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Historial de Observaciones</span>
+                  <pre className="whitespace-pre-wrap font-sans text-slate-600 dark:text-slate-400">{selectedDoc.notas_traduccion || selectedDoc.notes_traduccion}</pre>
                 </div>
-              )}
+              ) : null}
 
               {/* Formulario de Rechazo */}
               {rechazoOpen ? (
                 <form onSubmit={handleRejectSubmit} className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800 animate-in slide-in-from-top-2">
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-slate-400 uppercase">Motivo del Rechazo *</label>
+                  <label className="block space-y-1">
+                    <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Motivo del Rechazo *</span>
                     <textarea
                       required
                       placeholder="Escriba aquí las correcciones necesarias..."
                       value={motivo}
                       onChange={(e) => setMotivo(e.target.value)}
                       rows={3}
-                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 text-sm outline-none transition focus:border-red-500"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 text-sm outline-none transition focus:border-red-500 focus:ring-1 focus:ring-red-500"
                     />
-                  </div>
+                  </label>
                   <div className="flex justify-end gap-2 pt-2">
                     <button type="button" onClick={() => setRechazoOpen(false)} className="h-10 rounded-lg px-4 text-sm font-semibold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">Volver</button>
                     <button

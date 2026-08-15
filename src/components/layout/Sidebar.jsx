@@ -7,6 +7,7 @@ import {
   X,
   UserRoundSearch,
   Globe,
+  PenTool,
 } from "lucide-react";
 import packageJson from "../../../package.json";
 
@@ -88,6 +89,31 @@ const SIDEBAR_ITEMS = [
         label: "Mis Auditorías",
         activeMatch: ["/mis_auditorias_traduccion"],
         route: "/mis_auditorias_traduccion",
+      },
+    ],
+  },
+  {
+    code: "redaccion",
+    icon: PenTool,
+    label: "Redacción",
+    childrenItems: [
+      {
+        code: "quality_redaccion",
+        label: "Asignaciones - Redacción",
+        activeMatch: ["/asignaciones-redaccion"],
+        route: "/asignaciones-redaccion",
+      },
+      {
+        code: "mis_redacciones",
+        label: "Mis Redacciones",
+        activeMatch: ["/mis_redacciones"],
+        route: "/mis_redacciones",
+      },
+      {
+        code: "mis_auditorias_redaccion",
+        label: "Mis Auditorías - Redacción",
+        activeMatch: ["/mis_auditorias_redaccion"],
+        route: "/mis_auditorias_redaccion",
       },
     ],
   },
