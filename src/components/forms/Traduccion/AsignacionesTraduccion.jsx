@@ -4,7 +4,9 @@ import {
   FileText,
   Search,
   Languages,
-  UserCheck
+  UserCheck,
+  History,
+  RefreshCw
 } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -16,7 +18,10 @@ import {
   getPendientesTraductor,
   asignarTraductor,
   getPendientesQuality,
-  asignarQuality
+  asignarQuality,
+  getHistorialAsignadorTraduccion,
+  reasignarTraductor,
+  reasignarQuality
 } from "../../../services/traduccionServices";
 
 const renderEstadoBadge = (estado) => {
@@ -97,6 +102,14 @@ export default function AsignacionesTraduccion() {
     enabled: activeTab === "asignar_quality",
   });
 
+  const [isReassign, setIsReassign] = useState(false);
+
+  const queryHistorial = useQuery({
+    queryKey: ["traducciones", "historial-asignador", currentUserId],
+    queryFn: () => getHistorialAsignadorTraduccion(currentUserId),
+    enabled: activeTab === "historial" && Number.isFinite(currentUserId),
+  });
+
   // Active data selection
   const { currentData, isLoading } = useMemo(() => {
     if (activeTab === "asignar_traductor") {
@@ -105,11 +118,17 @@ export default function AsignacionesTraduccion() {
         isLoading: queryPendientesTraductor.isLoading
       };
     }
+    if (activeTab === "asignar_quality") {
+      return {
+        currentData: queryPendientesQuality.data ?? [],
+        isLoading: queryPendientesQuality.isLoading
+      };
+    }
     return {
-      currentData: queryPendientesQuality.data ?? [],
-      isLoading: queryPendientesQuality.isLoading
+      currentData: queryHistorial.data ?? [],
+      isLoading: queryHistorial.isLoading
     };
-  }, [activeTab, queryPendientesTraductor, queryPendientesQuality]);
+  }, [activeTab, queryPendientesTraductor, queryPendientesQuality, queryHistorial]);
 
   // Mutations
   const assignTraductorMutation = useMutation({
@@ -158,10 +177,65 @@ export default function AsignacionesTraduccion() {
     }
   });
 
+  const reasignarTraductorMutation = useMutation({
+    mutationFn: ({ expedienteId, documentoId, payload }) =>
+      reasignarTraductor(expedienteId, documentoId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["traducciones", "historial-asignador", currentUserId] });
+      Swal.fire({
+        title: "Reasignado",
+        text: "El traductor ha sido reasignado exitosamente.",
+        icon: "success",
+        confirmButtonColor: "#fe7405",
+      });
+      closeModal();
+    },
+    onError: (error) => {
+      Swal.fire({
+        title: "Error",
+        text: error.message || "Ocurrió un error al reasignar el traductor.",
+        icon: "error",
+        confirmButtonColor: "#fe7405",
+      });
+    }
+  });
+
+  const reasignarQualityMutation = useMutation({
+    mutationFn: ({ expedienteId, documentoId, payload }) =>
+      reasignarQuality(expedienteId, documentoId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["traducciones", "historial-asignador", currentUserId] });
+      Swal.fire({
+        title: "Reasignado",
+        text: "El revisor de Quality ha sido reasignado exitosamente.",
+        icon: "success",
+        confirmButtonColor: "#fe7405",
+      });
+      closeModal();
+    },
+    onError: (error) => {
+      Swal.fire({
+        title: "Error",
+        text: error.message || "Ocurrió un error al reasignar el revisor.",
+        icon: "error",
+        confirmButtonColor: "#fe7405",
+      });
+    }
+  });
+
   const handleOpenAssignTraductor = (doc) => {
     setSelectedDoc(doc);
     setSelectedUserId("");
     setObservaciones("");
+    setIsReassign(false);
+    setAssignTraductorOpen(true);
+  };
+
+  const handleOpenReassignTraductor = (doc) => {
+    setSelectedDoc(doc);
+    setSelectedUserId(doc.traductor_id || "");
+    setObservaciones(doc.observaciones || "");
+    setIsReassign(true);
     setAssignTraductorOpen(true);
   };
 
@@ -169,10 +243,20 @@ export default function AsignacionesTraduccion() {
     setSelectedDoc(doc);
     setSelectedUserId("");
     setObservaciones("");
+    setIsReassign(false);
+    setAssignQualityOpen(true);
+  };
+
+  const handleOpenReassignQuality = (doc) => {
+    setSelectedDoc(doc);
+    setSelectedUserId(doc.quality_id || "");
+    setObservaciones(doc.observaciones || "");
+    setIsReassign(true);
     setAssignQualityOpen(true);
   };
 
   const closeModal = () => {
+    setIsReassign(false);
     setAssignTraductorOpen(false);
     setAssignQualityOpen(false);
     setSelectedDoc(null);
@@ -183,29 +267,53 @@ export default function AsignacionesTraduccion() {
   const handleAssignTraductorSubmit = (e) => {
     e.preventDefault();
     if (!selectedDoc || !selectedUserId) return;
-    assignTraductorMutation.mutate({
-      expedienteId: selectedDoc.expediente_id,
-      documentoId: selectedDoc.id,
-      payload: {
-        traductor_id: Number(selectedUserId),
-        usuario_id: currentUserId,
-        observaciones: observaciones.trim()
-      }
-    });
+
+    const payload = {
+      usuario_id: currentUserId,
+      observaciones: observaciones.trim()
+    };
+
+    if (isReassign) {
+      payload.nuevo_traductor_id = Number(selectedUserId);
+      reasignarTraductorMutation.mutate({
+        expedienteId: selectedDoc.expediente_id,
+        documentoId: selectedDoc.id,
+        payload
+      });
+    } else {
+      payload.traductor_id = Number(selectedUserId);
+      assignTraductorMutation.mutate({
+        expedienteId: selectedDoc.expediente_id,
+        documentoId: selectedDoc.id,
+        payload
+      });
+    }
   };
 
   const handleAssignQualitySubmit = (e) => {
     e.preventDefault();
     if (!selectedDoc || !selectedUserId) return;
-    assignQualityMutation.mutate({
-      expedienteId: selectedDoc.expediente_id,
-      documentoId: selectedDoc.id,
-      payload: {
-        quality_id: Number(selectedUserId),
-        usuario_id: currentUserId,
-        observaciones: observaciones.trim()
-      }
-    });
+
+    const payload = {
+      usuario_id: currentUserId,
+      observaciones: observaciones.trim()
+    };
+
+    if (isReassign) {
+      payload.nuevo_quality_id = Number(selectedUserId);
+      reasignarQualityMutation.mutate({
+        expedienteId: selectedDoc.expediente_id,
+        documentoId: selectedDoc.id,
+        payload
+      });
+    } else {
+      payload.quality_id = Number(selectedUserId);
+      assignQualityMutation.mutate({
+        expedienteId: selectedDoc.expediente_id,
+        documentoId: selectedDoc.id,
+        payload
+      });
+    }
   };
 
   // Filter items
@@ -269,7 +377,7 @@ export default function AsignacionesTraduccion() {
           )
         }
       );
-    } else {
+    } else if (activeTab === "asignar_quality") {
       base.push(
         {
           header: "Traductor",
@@ -283,6 +391,36 @@ export default function AsignacionesTraduccion() {
         {
           header: "Fecha Envío a Quality",
           accessor: "fecha_envio_quality",
+          render: (val) => (
+            <span className="text-xs font-semibold text-slate-500">
+              {val ? new Date(val).toLocaleDateString() : "-"}
+            </span>
+          )
+        }
+      );
+    } else {
+      base.push(
+        {
+          header: "Traductor",
+          accessor: "traductor_nombre",
+          render: (val) => (
+            <span className="inline-flex rounded bg-blue-50 dark:bg-blue-950/30 px-2 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300">
+              {val || "-"}
+            </span>
+          )
+        },
+        {
+          header: "Revisor Quality",
+          accessor: "quality_nombre",
+          render: (val) => (
+            <span className="inline-flex rounded bg-purple-50 dark:bg-purple-950/30 px-2 py-1 text-xs font-semibold text-purple-700 dark:text-purple-300">
+              {val || "-"}
+            </span>
+          )
+        },
+        {
+          header: "Fecha Asignación",
+          accessor: "updated_at",
           render: (val) => (
             <span className="text-xs font-semibold text-slate-500">
               {val ? new Date(val).toLocaleDateString() : "-"}
@@ -355,6 +493,22 @@ export default function AsignacionesTraduccion() {
           <UserCheck size={16} strokeWidth={2.2} />
           Asignación de Quality
         </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("historial");
+            setSearchQuery("");
+          }}
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-all ${
+            activeTab === "historial"
+              ? "border-[#fe7405] text-[#fe7405]"
+              : "border-transparent text-slate-500 hover:text-slate-700"
+          }`}
+        >
+          <History size={16} />
+          Historial de Asignaciones
+        </button>
       </div>
 
       {/* Table Section */}
@@ -386,6 +540,33 @@ export default function AsignacionesTraduccion() {
                 ASIGNAR QUALITY
               </button>
             )}
+
+            {activeTab === "historial" && (() => {
+              const isFinished = ["TRADUCIDO_Y_VERIFICADO", "NO_REQUIERE"].includes(row.estado_traduccion);
+              if (isFinished) {
+                return <span className="text-xs text-slate-400 italic">Completado</span>;
+              }
+              return (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenReassignTraductor(row)}
+                    className="inline-flex h-8 items-center justify-center gap-1 rounded bg-[#fe7405] px-2 py-0.5 text-[10px] font-bold text-white shadow-sm transition hover:bg-[#e06300] active:scale-95"
+                  >
+                    <RefreshCw size={10} />
+                    REASIGNAR TRADUCTOR
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenReassignQuality(row)}
+                    className="inline-flex h-8 items-center justify-center gap-1 rounded bg-[#0e183f] px-2 py-0.5 text-[10px] font-bold text-white shadow-sm transition hover:bg-[#1a2d69] active:scale-95"
+                  >
+                    <RefreshCw size={10} />
+                    REASIGNAR QUALITY
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         )}
       />
@@ -398,7 +579,7 @@ export default function AsignacionesTraduccion() {
           size="md"
           header={
             <div>
-              <h3 className="text-md font-bold uppercase tracking-wide">Asignar Traductor</h3>
+              <h3 className="text-md font-bold uppercase tracking-wide">{isReassign ? "Reasignar Traductor" : "Asignar Traductor"}</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">Expediente: {selectedDoc.codigo_expediente}</p>
             </div>
           }
@@ -438,10 +619,14 @@ export default function AsignacionesTraduccion() {
                 <button type="button" onClick={closeModal} className="h-10 rounded-lg px-4 text-sm font-semibold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">Cancelar</button>
                 <button
                   type="submit"
-                  disabled={assignTraductorMutation.isPending}
+                  disabled={assignTraductorMutation.isPending || reasignarTraductorMutation.isPending}
                   className="h-10 rounded-lg bg-[#fe7405] px-5 text-sm font-semibold text-white shadow hover:bg-[#e06300] transition disabled:opacity-50"
                 >
-                  {assignTraductorMutation.isPending ? "Asignando..." : "Asignar"}
+                  {assignTraductorMutation.isPending || reasignarTraductorMutation.isPending
+                    ? "Asignando..."
+                    : isReassign
+                    ? "Reasignar"
+                    : "Asignar"}
                 </button>
               </div>
           </form>
@@ -456,7 +641,7 @@ export default function AsignacionesTraduccion() {
           size="md"
           header={
             <div>
-              <h3 className="text-md font-bold uppercase tracking-wide">Asignar Revisor de Quality</h3>
+              <h3 className="text-md font-bold uppercase tracking-wide">{isReassign ? "Reasignar Revisor Quality" : "Asignar Revisor de Quality"}</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">Expediente: {selectedDoc.codigo_expediente}</p>
             </div>
           }
@@ -496,10 +681,14 @@ export default function AsignacionesTraduccion() {
                 <button type="button" onClick={closeModal} className="h-10 rounded-lg px-4 text-sm font-semibold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">Cancelar</button>
                 <button
                   type="submit"
-                  disabled={assignQualityMutation.isPending}
+                  disabled={assignQualityMutation.isPending || reasignarQualityMutation.isPending}
                   className="h-10 rounded-lg bg-[#0e183f] px-5 text-sm font-semibold text-white shadow hover:bg-[#1a2d69] transition disabled:opacity-50"
                 >
-                  {assignQualityMutation.isPending ? "Asignando..." : "Asignar"}
+                  {assignQualityMutation.isPending || reasignarQualityMutation.isPending
+                    ? "Asignando..."
+                    : isReassign
+                    ? "Reasignar"
+                    : "Asignar"}
                 </button>
               </div>
           </form>

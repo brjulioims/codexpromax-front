@@ -13,6 +13,9 @@ export default defineConfig({
         target: 'https://marital-disbelief-ascent.ngrok-free.dev/',
         changeOrigin: true,
         secure: false,
+        headers: {
+          'ngrok-skip-browser-warning': '1'
+        },
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
