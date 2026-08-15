@@ -37,7 +37,7 @@ const renderEstadoBadge = (estado) => {
   const config = map[estado] || { text: estado || "Desconocido", classes: "bg-slate-100 text-slate-800 dark:bg-slate-800/40 dark:text-slate-400" };
 
   return (
-    <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold tracking-wide transition-colors ${config.classes}`}>
+    <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide transition-colors ${config.classes}`}>
       {config.text}
     </span>
   );
@@ -309,20 +309,20 @@ export default function MisTraducciones() {
         >
           <form onSubmit={handleIlegibleSubmit} className="space-y-4">
               <div className="space-y-1">
-                <span className="block text-xs font-semibold text-slate-400 uppercase">Documento</span>
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Documento</span>
                 <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200">{selectedDoc.nombre_documento}</span>
               </div>
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-400 uppercase">Motivo del Inconveniente *</label>
+              <label className="block space-y-1">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Motivo del Inconveniente *</span>
                 <textarea
                   required
                   placeholder="Ej: La página 3 se encuentra borrosa, no se distingue el texto..."
                   value={motivo}
                   onChange={(e) => setMotivo(e.target.value)}
                   rows={3}
-                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 text-sm outline-none transition focus:border-red-500"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 text-sm outline-none transition focus:border-red-500 focus:ring-1 focus:ring-red-500"
                 />
-              </div>
+              </label>
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button type="button" onClick={closeModal} className="h-10 rounded-lg px-4 text-sm font-semibold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">Cancelar</button>
                 <button
@@ -353,18 +353,18 @@ export default function MisTraducciones() {
           <form onSubmit={handleUploadSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm border-b border-slate-100 dark:border-slate-800 pb-3">
                 <div>
-                  <span className="block text-xs font-semibold text-slate-400 uppercase">Cliente</span>
+                  <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Cliente</span>
                   <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedDoc.cliente_nombre || "-"}</span>
                 </div>
                 <div>
-                  <span className="block text-xs font-semibold text-slate-400 uppercase">Documento</span>
+                  <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Documento</span>
                   <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedDoc.nombre_documento || "-"}</span>
                 </div>
               </div>
 
               {selectedDoc.archivo_url && (
                 <div className="space-y-1">
-                  <span className="block text-xs font-semibold text-slate-400 uppercase">Archivo original a traducir</span>
+                  <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Archivo original a traducir</span>
                   <a
                     href={selectedDoc.archivo_url}
                     target="_blank"
@@ -377,28 +377,28 @@ export default function MisTraducciones() {
                 </div>
               )}
 
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-400 uppercase">Enlace/URL de la traducción *</label>
+              <label className="block space-y-1">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Enlace/URL de la traducción *</span>
                 <input
                   required
                   type="url"
                   placeholder="https://drive.google.com/file/... o similar"
                   value={archivoTraduccionUrl}
                   onChange={(e) => setArchivoTraduccionUrl(e.target.value)}
-                  className="w-full h-10 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 text-sm outline-none transition focus:border-[#fe7405]"
+                  className="w-full h-10 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 text-sm outline-none transition focus:border-[#fe7405] focus:ring-1 focus:ring-[#fe7405]"
                 />
-              </div>
+              </label>
 
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-400 uppercase">Observaciones del Traductor</label>
+              <label className="block space-y-1">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Observaciones del Traductor</span>
                 <textarea
                   placeholder="Notas adicionales sobre la traducción..."
                   value={observaciones}
                   onChange={(e) => setObservaciones(e.target.value)}
                   rows={3}
-                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 text-sm outline-none transition focus:border-[#fe7405]"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 text-sm outline-none transition focus:border-[#fe7405] focus:ring-1 focus:ring-[#fe7405]"
                 />
-              </div>
+              </label>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button type="button" onClick={closeModal} className="h-10 rounded-lg px-4 text-sm font-semibold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">Cancelar</button>

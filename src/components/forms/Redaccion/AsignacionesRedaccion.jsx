@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FileText,
   Search,
-  Languages,
+  PenTool,
   UserCheck
 } from "lucide-react";
 import Swal from "sweetalert2";
@@ -13,25 +13,56 @@ import ModalGeneral from "../../ui/ModalGeneral";
 import Table from "../../ui/Table";
 import { useUsuariosQuery } from "../../../hooks/queries/useUsuariosQuery";
 import {
-  getPendientesTraductor,
-  asignarTraductor,
+  getPendientesRedactor,
+  asignarRedactor,
   getPendientesQuality,
   asignarQuality
-} from "../../../services/traduccionServices";
+} from "../../../services/redaccionServices";
 
 const renderEstadoBadge = (estado) => {
   const map = {
+    // Solicited / Pending
     SOLICITADA: { text: "Solicitada", classes: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300" },
-    PENDIENTE_TRADUCCION: { text: "Pendiente Traducción", classes: "bg-slate-100 text-slate-800 dark:bg-slate-800/40 dark:text-slate-400" },
-    ASIGNADO_TRADUCTOR: { text: "Asignado a Traductor", classes: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300" },
-    QUALITY_DEVUELTO_TRADUCTOR: { text: "Devuelto por Quality", classes: "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-900" },
-    EN_QUALITY_PENDIENTE_ASIGNACION: { text: "Listo para Quality", classes: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300" },
-    ASIGNADO_QUALITY: { text: "En Auditoría Quality", classes: "bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300" },
-    TRADUCIDO_Y_VERIFICADO: { text: "Aprobado", classes: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" },
-    ILEGIBLE_DEVUELTO: { text: "Devuelto (Ilegible)", classes: "bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300" },
-    NO_REQUIERE: { text: "No Requiere", classes: "bg-slate-100 text-slate-500 dark:bg-slate-900 dark:text-slate-400" },
-    ILEGIBLE_CORREGIDO: { text: "Ilegible Corregido", classes: "bg-teal-100 text-teal-800 dark:bg-teal-950/40 dark:text-teal-300" },
-    CORREGIDO_TRADUCTOR_QUALITY: { text: "Corregido por Traductor", classes: "bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-300" },
+    REDACCION_SOLICITADA: { text: "Solicitada", classes: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300" },
+    PENDIENTE_ASIGNACION: { text: "Pendiente Asignación", classes: "bg-slate-100 text-slate-800 dark:bg-slate-800/40 dark:text-slate-400" },
+    
+    // Assigned to redactor
+    ASIGNADO_REDACTOR: { text: "Asignado a Redactor", classes: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300" },
+    REDACCION_ASIGNADA: { text: "Asignado a Redactor", classes: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300" },
+    REDACCION_ASIGNADO: { text: "Asignado a Redactor", classes: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300" },
+    ASIGNADO: { text: "Asignado", classes: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300" },
+
+    // Contact registered
+    CONTACTO_REGISTRADO: { text: "Contacto Registrado", classes: "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300" },
+    CONTACTO_CLIENTE: { text: "Contacto Registrado", classes: "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300" },
+    CONTACTO: { text: "Contacto Registrado", classes: "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300" },
+
+    // Interview / Toma declaración
+    EN_TOMA_DECLARACION: { text: "Toma de Declaración", classes: "bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-300" },
+    TOMA_DECLARACION: { text: "Toma de Declaración", classes: "bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-300" },
+    TOMA_DECLARACION_EN_CURSO: { text: "Toma de Declaración", classes: "bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-300" },
+
+    // Review in Quality
+    EN_REVISION_QUALITY: { text: "En revisión Quality", classes: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300" },
+    ENVIADO_QUALITY: { text: "En revisión Quality", classes: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300" },
+    ENVIADO_A_QUALITY: { text: "En revisión Quality", classes: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300" },
+    EN_QUALITY: { text: "En revisión Quality", classes: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300" },
+
+    // Rejected by Quality
+    RECHAZADO_QUALITY: { text: "Devuelto por Quality", classes: "bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200" },
+    RECHAZADA_QUALITY: { text: "Devuelto por Quality", classes: "bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200" },
+    DEVUELTO_QUALITY: { text: "Devuelto por Quality", classes: "bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200" },
+    DEVUELTO_POR_QUALITY: { text: "Devuelto por Quality", classes: "bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200" },
+
+    // Approved
+    APROBADO_QUALITY: { text: "Aprobada por Quality", classes: "bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300" },
+    APROBADA_QUALITY: { text: "Aprobada por Quality", classes: "bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300" },
+    APROBADA: { text: "Aprobada", classes: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" },
+    REDACCION_APROBADA: { text: "Aprobada", classes: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" },
+
+    // Sent to Translation
+    ENVIADO_TRADUCCION: { text: "Enviado a Traducción", classes: "bg-teal-100 text-teal-800 dark:bg-teal-950/40 dark:text-teal-300" },
+    ENVIADO_A_TRADUCCION: { text: "Enviado a Traducción", classes: "bg-teal-100 text-teal-800 dark:bg-teal-950/40 dark:text-teal-300" },
   };
 
   const config = map[estado] || { text: estado || "Desconocido", classes: "bg-slate-100 text-slate-800 dark:bg-slate-800/40 dark:text-slate-400" };
@@ -43,13 +74,13 @@ const renderEstadoBadge = (estado) => {
   );
 };
 
-export default function AsignacionesTraduccion() {
+export default function AsignacionesRedaccion() {
   const queryClient = useQueryClient();
 
   // Active Tab:
-  // "asignar_traductor" -> Pendientes de traductor (GET /api/traducciones/pendientes-traductor)
-  // "asignar_quality"   -> Pendientes de quality (GET /api/traducciones/pendientes-quality)
-  const [activeTab, setActiveTab] = useState("asignar_traductor");
+  // "asignar_redactor" -> Pendientes de redactor
+  // "asignar_quality"  -> Pendientes de quality
+  const [activeTab, setActiveTab] = useState("asignar_redactor");
 
   // Get logged in user info
   const rawUser = JSON.parse(localStorage.getItem("user") ?? "{}");
@@ -58,10 +89,10 @@ export default function AsignacionesTraduccion() {
   );
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDoc, setSelectedDoc] = useState(null);
+  const [selectedTicket, setSelectedTicket] = useState(null);
 
   // Modals state
-  const [assignTraductorOpen, setAssignTraductorOpen] = useState(false);
+  const [assignRedactorOpen, setAssignRedactorOpen] = useState(false);
   const [assignQualityOpen, setAssignQualityOpen] = useState(false);
 
   // Form states
@@ -71,80 +102,84 @@ export default function AsignacionesTraduccion() {
   // Fetch all users for assignments
   const { data: usuarios = [] } = useUsuariosQuery();
 
-  // Filter translators and quality reviewers with robust fallback
-  const translatorsList = useMemo(() => {
+  // Filter redactors and quality reviewers with robust fallback
+  const redactorsList = useMemo(() => {
     const filtered = usuarios.filter((u) => {
       const rol = `${u.rolNombre ?? u.role ?? u.rol_nombre ?? ""}`.toLowerCase();
-      return rol.includes("trad") || rol.includes("translator");
+      return rol.includes("redac") || rol.includes("writer") || rol.includes("declar");
     });
     return filtered.length > 0 ? filtered : usuarios;
   }, [usuarios]);
 
   const qualityReviewersList = useMemo(() => {
-    return usuarios;
+    const filtered = usuarios.filter((u) => {
+      const rol = `${u.rolNombre ?? u.role ?? u.rol_nombre ?? ""}`.toLowerCase();
+      return rol.includes("quality") || rol.includes("auditor") || rol.includes("control");
+    });
+    return filtered.length > 0 ? filtered : usuarios;
   }, [usuarios]);
 
   // Queries
-  const queryPendientesTraductor = useQuery({
-    queryKey: ["traducciones", "pendientes-traductor"],
-    queryFn: getPendientesTraductor,
-    enabled: activeTab === "asignar_traductor",
+  const queryPendientesRedactor = useQuery({
+    queryKey: ["redacciones", "pendientes-redactor"],
+    queryFn: getPendientesRedactor,
+    enabled: activeTab === "asignar_redactor",
   });
 
   const queryPendientesQuality = useQuery({
-    queryKey: ["traducciones", "pendientes-quality"],
+    queryKey: ["redacciones", "pendientes-quality"],
     queryFn: getPendientesQuality,
     enabled: activeTab === "asignar_quality",
   });
 
   // Active data selection
   const { currentData, isLoading } = useMemo(() => {
-    if (activeTab === "asignar_traductor") {
+    if (activeTab === "asignar_redactor") {
       return {
-        currentData: queryPendientesTraductor.data ?? [],
-        isLoading: queryPendientesTraductor.isLoading
+        currentData: queryPendientesRedactor.data ?? [],
+        isLoading: queryPendientesRedactor.isLoading
       };
     }
     return {
       currentData: queryPendientesQuality.data ?? [],
       isLoading: queryPendientesQuality.isLoading
     };
-  }, [activeTab, queryPendientesTraductor, queryPendientesQuality]);
+  }, [activeTab, queryPendientesRedactor, queryPendientesQuality]);
 
   // Mutations
-  const assignTraductorMutation = useMutation({
-    mutationFn: ({ expedienteId, documentoId, payload }) =>
-      asignarTraductor(expedienteId, documentoId, payload),
+  const assignRedactorMutation = useMutation({
+    mutationFn: ({ expedienteId, payload }) =>
+      asignarRedactor(expedienteId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["traducciones", "pendientes-traductor"] });
+      queryClient.invalidateQueries({ queryKey: ["redacciones", "pendientes-redactor"] });
       Swal.fire({
         title: "Asignado",
-        text: "El traductor ha sido asignado exitosamente.",
+        text: "El redactor ha sido asignado exitosamente.",
         icon: "success",
-        confirmButtonColor: "#fe7405",
+        confirmButtonColor: "#0e183f",
       });
       closeModal();
     },
     onError: (error) => {
       Swal.fire({
         title: "Error",
-        text: error.message || "Ocurrió un error al asignar el traductor.",
+        text: error.message || "Ocurrió un error al asignar el redactor.",
         icon: "error",
-        confirmButtonColor: "#fe7405",
+        confirmButtonColor: "#0e183f",
       });
     }
   });
 
   const assignQualityMutation = useMutation({
-    mutationFn: ({ expedienteId, documentoId, payload }) =>
-      asignarQuality(expedienteId, documentoId, payload),
+    mutationFn: ({ expedienteId, payload }) =>
+      asignarQuality(expedienteId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["traducciones", "pendientes-quality"] });
+      queryClient.invalidateQueries({ queryKey: ["redacciones", "pendientes-quality"] });
       Swal.fire({
         title: "Asignado",
-        text: "El revisor de Quality ha sido asignado exitosamente.",
+        text: "El revisor de Quality Redacción ha sido asignado exitosamente.",
         icon: "success",
-        confirmButtonColor: "#fe7405",
+        confirmButtonColor: "#0e183f",
       });
       closeModal();
     },
@@ -153,41 +188,41 @@ export default function AsignacionesTraduccion() {
         title: "Error",
         text: error.message || "Ocurrió un error al asignar el revisor.",
         icon: "error",
-        confirmButtonColor: "#fe7405",
+        confirmButtonColor: "#0e183f",
       });
     }
   });
 
-  const handleOpenAssignTraductor = (doc) => {
-    setSelectedDoc(doc);
+  const handleOpenAssignRedactor = (ticket) => {
+    setSelectedTicket(ticket);
     setSelectedUserId("");
     setObservaciones("");
-    setAssignTraductorOpen(true);
+    setAssignRedactorOpen(true);
   };
 
-  const handleOpenAssignQuality = (doc) => {
-    setSelectedDoc(doc);
+  const handleOpenAssignQuality = (ticket) => {
+    setSelectedTicket(ticket);
     setSelectedUserId("");
     setObservaciones("");
     setAssignQualityOpen(true);
   };
 
   const closeModal = () => {
-    setAssignTraductorOpen(false);
+    setAssignRedactorOpen(false);
     setAssignQualityOpen(false);
-    setSelectedDoc(null);
+    setSelectedTicket(null);
     setSelectedUserId("");
     setObservaciones("");
   };
 
-  const handleAssignTraductorSubmit = (e) => {
+  const handleAssignRedactorSubmit = (e) => {
     e.preventDefault();
-    if (!selectedDoc || !selectedUserId) return;
-    assignTraductorMutation.mutate({
-      expedienteId: selectedDoc.expediente_id,
-      documentoId: selectedDoc.id,
+    if (!selectedTicket || !selectedUserId) return;
+    assignRedactorMutation.mutate({
+      expedienteId: selectedTicket.expediente_id,
       payload: {
-        traductor_id: Number(selectedUserId),
+        redaccion_id: selectedTicket.id || selectedTicket.redaccion_id,
+        redactor_id: Number(selectedUserId),
         usuario_id: currentUserId,
         observaciones: observaciones.trim()
       }
@@ -196,11 +231,11 @@ export default function AsignacionesTraduccion() {
 
   const handleAssignQualitySubmit = (e) => {
     e.preventDefault();
-    if (!selectedDoc || !selectedUserId) return;
+    if (!selectedTicket || !selectedUserId) return;
     assignQualityMutation.mutate({
-      expedienteId: selectedDoc.expediente_id,
-      documentoId: selectedDoc.id,
+      expedienteId: selectedTicket.expediente_id,
       payload: {
+        redaccion_id: selectedTicket.id || selectedTicket.redaccion_id,
         quality_id: Number(selectedUserId),
         usuario_id: currentUserId,
         observaciones: observaciones.trim()
@@ -216,8 +251,7 @@ export default function AsignacionesTraduccion() {
       return (
         `${item.codigo_expediente ?? ""}`.toLowerCase().includes(query) ||
         `${item.cliente_nombre ?? ""}`.toLowerCase().includes(query) ||
-        `${item.nombre_documento ?? ""}`.toLowerCase().includes(query) ||
-        `${item.traductor_nombre ?? ""}`.toLowerCase().includes(query) ||
+        `${item.redactor_nombre ?? ""}`.toLowerCase().includes(query) ||
         `${item.usuario_solicitante_nombre ?? ""}`.toLowerCase().includes(query)
       );
     });
@@ -241,27 +275,26 @@ export default function AsignacionesTraduccion() {
         render: (val) => <span className="font-medium">{val || "-"}</span>
       },
       {
-        header: "Documento",
-        accessor: "nombre_documento",
-        render: (val) => <span className="text-slate-600 dark:text-slate-400">{val || "-"}</span>
-      },
-      {
         header: "Estado",
-        accessor: "estado_traduccion",
+        accessor: "estado_redaccion",
         render: (val) => renderEstadoBadge(val)
       }
     ];
 
-    if (activeTab === "asignar_traductor") {
+    if (activeTab === "asignar_redactor") {
       base.push(
         {
-          header: "Solicitante",
-          accessor: "usuario_solicitante_nombre",
-          render: (val) => <span className="text-xs text-slate-500">{val || "-"}</span>
+          header: "Urgente",
+          accessor: "es_urgente",
+          render: (val) => (
+            <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-bold ${val ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-600'}`}>
+              {val ? "SÍ" : "NO"}
+            </span>
+          )
         },
         {
           header: "Fecha Solicitud",
-          accessor: "fecha_solicitud_traduccion",
+          accessor: "created_at",
           render: (val) => (
             <span className="text-xs font-semibold text-slate-500">
               {val ? new Date(val).toLocaleDateString() : "-"}
@@ -272,8 +305,8 @@ export default function AsignacionesTraduccion() {
     } else {
       base.push(
         {
-          header: "Traductor",
-          accessor: "traductor_nombre",
+          header: "Redactor",
+          accessor: "redactor_nombre",
           render: (val) => (
             <span className="inline-flex rounded bg-blue-50 dark:bg-blue-950/30 px-2 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300">
               {val || "-"}
@@ -281,8 +314,8 @@ export default function AsignacionesTraduccion() {
           )
         },
         {
-          header: "Fecha Envío a Quality",
-          accessor: "fecha_envio_quality",
+          header: "Fecha Envío",
+          accessor: "updated_at",
           render: (val) => (
             <span className="text-xs font-semibold text-slate-500">
               {val ? new Date(val).toLocaleDateString() : "-"}
@@ -298,9 +331,9 @@ export default function AsignacionesTraduccion() {
   return (
     <section className="space-y-5">
       <HeaderBox
-        title="Asignaciones - Traducción"
-        subtitle="Asignación de Traductores y Revisores de Calidad para Traducciones"
-        Icon={FileText}
+        title="Asignaciones - Redacción"
+        subtitle="Asignación de Redactores y Revisores de Calidad para declaraciones de Asilo"
+        Icon={PenTool}
         action={
           <div className="flex flex-col gap-3 sm:flex-row items-center w-full sm:w-auto">
             <div className="relative w-full sm:w-64">
@@ -309,7 +342,7 @@ export default function AsignacionesTraduccion() {
               </span>
               <input
                 type="text"
-                placeholder="Buscar por expediente, cliente, documento..."
+                placeholder="Buscar por expediente, cliente..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-10 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 pl-9 pr-4 text-sm outline-none transition focus:border-slate-300 dark:focus:border-slate-700"
@@ -327,17 +360,17 @@ export default function AsignacionesTraduccion() {
         <button
           type="button"
           onClick={() => {
-            setActiveTab("asignar_traductor");
+            setActiveTab("asignar_redactor");
             setSearchQuery("");
           }}
           className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-all ${
-            activeTab === "asignar_traductor"
+            activeTab === "asignar_redactor"
               ? "border-[#fe7405] text-[#fe7405]"
               : "border-transparent text-slate-500 hover:text-slate-700"
           }`}
         >
-          <Languages size={16} />
-          Asignación de Traductor
+          <PenTool size={16} />
+          Asignación de Redactor
         </button>
 
         <button
@@ -362,17 +395,17 @@ export default function AsignacionesTraduccion() {
         columns={columns}
         data={filteredData}
         loading={isLoading}
-        loadingLabel="Obteniendo documentos..."
+        loadingLabel="Obteniendo declaraciones..."
         actions={(row) => (
           <div className="flex items-center justify-center">
-            {activeTab === "asignar_traductor" && (
+            {activeTab === "asignar_redactor" && (
               <button
                 type="button"
-                onClick={() => handleOpenAssignTraductor(row)}
+                onClick={() => handleOpenAssignRedactor(row)}
                 className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-[#fe7405] px-3.5 py-1 text-xs font-bold text-white shadow-sm transition hover:bg-[#e06300] hover:scale-[1.02] active:scale-95"
               >
-                <Languages size={14} />
-                ASIGNAR TRADUCTOR
+                <PenTool size={14} />
+                ASIGNAR REDACTOR
               </button>
             )}
 
@@ -390,36 +423,36 @@ export default function AsignacionesTraduccion() {
         )}
       />
 
-      {/* MODAL: ASIGNAR TRADUCTOR */}
-      {assignTraductorOpen && selectedDoc && (
+      {/* MODAL: ASIGNAR REDACTOR */}
+      {assignRedactorOpen && selectedTicket && (
         <ModalGeneral
           open
           onClose={closeModal}
           size="md"
           header={
             <div>
-              <h3 className="text-md font-bold uppercase tracking-wide">Asignar Traductor</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Expediente: {selectedDoc.codigo_expediente}</p>
+              <h3 className="text-md font-bold uppercase tracking-wide">Asignar Redactor</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Expediente: {selectedTicket.codigo_expediente}</p>
             </div>
           }
         >
-          <form onSubmit={handleAssignTraductorSubmit} className="space-y-4">
+          <form onSubmit={handleAssignRedactorSubmit} className="space-y-4">
               <div className="space-y-1">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Documento</span>
-                <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200">{selectedDoc.nombre_documento}</span>
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Cliente</span>
+                <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200">{selectedTicket.cliente_nombre}</span>
               </div>
               <label className="block space-y-1">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Seleccionar Traductor *</span>
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Seleccionar Redactor *</span>
                 <select
                   required
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
                   className="w-full h-10 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 text-sm outline-none transition focus:border-[#fe7405] focus:ring-1 focus:ring-[#fe7405]"
                 >
-                  <option value="">Seleccione un traductor...</option>
-                  {translatorsList.map((user) => (
+                  <option value="">Seleccione un redactor...</option>
+                  {redactorsList.map((user) => (
                     <option key={user.id} value={user.id}>
-                      {user.nombre} ({user.rolNombre || "Traductor"})
+                      {user.nombre} ({user.rolNombre || user.role || user.rol_nombre || "Usuario"})
                     </option>
                   ))}
                 </select>
@@ -427,7 +460,7 @@ export default function AsignacionesTraduccion() {
               <label className="block space-y-1">
                 <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Instrucciones / Observaciones</span>
                 <textarea
-                  placeholder="Detalles sobre prioridades o fecha límite..."
+                  placeholder="Detalles o prioridades para la redacción..."
                   value={observaciones}
                   onChange={(e) => setObservaciones(e.target.value)}
                   rows={3}
@@ -438,10 +471,10 @@ export default function AsignacionesTraduccion() {
                 <button type="button" onClick={closeModal} className="h-10 rounded-lg px-4 text-sm font-semibold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">Cancelar</button>
                 <button
                   type="submit"
-                  disabled={assignTraductorMutation.isPending}
+                  disabled={assignRedactorMutation.isPending}
                   className="h-10 rounded-lg bg-[#fe7405] px-5 text-sm font-semibold text-white shadow hover:bg-[#e06300] transition disabled:opacity-50"
                 >
-                  {assignTraductorMutation.isPending ? "Asignando..." : "Asignar"}
+                  {assignRedactorMutation.isPending ? "Asignando..." : "Asignar"}
                 </button>
               </div>
           </form>
@@ -449,7 +482,7 @@ export default function AsignacionesTraduccion() {
       )}
 
       {/* MODAL: ASIGNAR QUALITY */}
-      {assignQualityOpen && selectedDoc && (
+      {assignQualityOpen && selectedTicket && (
         <ModalGeneral
           open
           onClose={closeModal}
@@ -457,14 +490,14 @@ export default function AsignacionesTraduccion() {
           header={
             <div>
               <h3 className="text-md font-bold uppercase tracking-wide">Asignar Revisor de Quality</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Expediente: {selectedDoc.codigo_expediente}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Expediente: {selectedTicket.codigo_expediente}</p>
             </div>
           }
         >
           <form onSubmit={handleAssignQualitySubmit} className="space-y-4">
               <div className="space-y-1">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Documento</span>
-                <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200">{selectedDoc.nombre_documento}</span>
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Cliente</span>
+                <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200">{selectedTicket.cliente_nombre}</span>
               </div>
               <label className="block space-y-1">
                 <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Seleccionar Revisor Quality *</span>
