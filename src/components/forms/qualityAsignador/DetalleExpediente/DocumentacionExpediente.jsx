@@ -863,8 +863,8 @@ export default function DocumentacionExpediente({ expediente = {} }) {
   }
 
   return (
-    <div className="px-5 py-5">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div className="px-2 py-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {categorias.map((categoria) => {
           const IconCat = categoria.icon;
           const items = itemsPorCategoria[categoria.id] ?? [];
@@ -887,9 +887,9 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                     <IconCat size={16} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-start gap-2">
                       <h3
-                        className={`min-w-0 truncate text-[14px] font-bold sm:text-[15px] ${categoria.color.head}`}
+                        className={`min-w-0 flex-1 text-[14px] font-bold leading-tight break-words sm:text-[15px] ${categoria.color.head}`}
                       >
                         {categoria.titulo}
                       </h3>
@@ -939,7 +939,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                             isDropdownOpen ? "z-40" : "z-0"
                           } relative py-4 transition-all duration-200 hover:bg-slate-50/40 dark:hover:bg-slate-900/10 ${style.container}`}
                         >
-                          <div className="flex items-start justify-between gap-4">
+                          <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-start 2xl:justify-between">
                             {/* Left Side: Content & Badges */}
                             <div className="flex items-start gap-3 min-w-0 flex-1">
                               <div
@@ -1001,7 +1001,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
 
                                       return (
                                         <span
-                                          className={`inline-flex items-center gap-1 border px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide ${badgeClasses}`}
+                                          className={`hidden 2xl:inline-flex items-center gap-1 border px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide ${badgeClasses}`}
                                         >
                                           <Languages size={10} />
                                           {`Traducción: ${formatEstadoTraduccionLabel(item.estado_traduccion)}`}
@@ -1014,7 +1014,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                                       return (
                                         <span
                                           title="El documento debe marcarse como RECIBIDO para poder enviarse a traducción"
-                                          className="inline-flex items-center gap-1 border border-slate-200 bg-slate-100 px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide text-slate-400 cursor-not-allowed select-none dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-600"
+                                          className="hidden 2xl:inline-flex items-center gap-1 border border-slate-200 bg-slate-100 px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide text-slate-400 cursor-not-allowed select-none dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-600"
                                         >
                                           <Languages size={10} />
                                           Pendiente Recepción
@@ -1034,17 +1034,17 @@ export default function DocumentacionExpediente({ expediente = {} }) {
 
                                 {/* Observations */}
                                 {item.observaciones && item.observaciones !== "Aprobado por Quality" ? (
-                                  <p className={`text-[11px] leading-5 ${style.meta}`}>
+                                  <p className={`hidden 2xl:block text-[11px] leading-5 ${style.meta}`}>
                                     {item.observaciones}
                                   </p>
                                 ) : item.estado === "PENDIENTE" ? (
-                                  <p className={`text-[11px] italic ${style.meta}`}>
+                                  <p className={`hidden 2xl:block text-[11px] italic ${style.meta}`}>
                                     Sin observaciones registradas
                                   </p>
                                 ) : null}
 
                                 {/* Metadata updates */}
-                                <div className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-[9.5px] ${style.meta}`}>
+                                <div className={`hidden 2xl:flex flex-wrap items-center gap-x-4 gap-y-1 text-[9.5px] ${style.meta}`}>
                                   {item.usuario_actualizador ? (
                                     <div className="flex items-center gap-1">
                                       <User size={10} />
@@ -1062,7 +1062,7 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                             </div>
 
                             {/* Right Side: Actions (Edit, Delete, Enviar Traducción) */}
-                            <div className="flex items-center gap-1.5 shrink-0 self-start mt-0.5">
+                            <div className="flex flex-wrap items-center gap-1.5 self-start 2xl:mt-0.5 2xl:shrink-0">
                               {/* Botón de Enviar a Traducción si ya está Recibido y requiere traducción pero no está enviado */}
                               {requiereTraduccion && item.estado === "RECIBIDO" && (
                                 (() => {
@@ -1118,6 +1118,36 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                                 </button>
                               )}
 
+                              {requiereTraduccion && item.estado_traduccion && item.estado_traduccion !== "PENDIENTE_TRADUCCION" && item.estado_traduccion !== "NO_REQUIERE" ? (
+                                <span
+                                  className={`inline-flex items-center gap-1 border px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide 2xl:hidden ${
+                                    item.estado_traduccion === "TRADUCIDO_Y_VERIFICADO"
+                                      ? "border-emerald-200 bg-emerald-100/50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300"
+                                      : item.estado_traduccion === "ILEGIBLE_DEVUELTO" ||
+                                        item.estado_traduccion === "QUALITY_DEVUELTO_TRADUCTOR"
+                                        ? "border-rose-200 bg-rose-100/50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
+                                        : "border-amber-200 bg-amber-100/50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300"
+                                  }`}
+                                >
+                                  <Languages size={10} />
+                                  {`Traducción: ${
+                                    {
+                                      PENDIENTE_TRADUCCION: "Pendiente Enviar",
+                                      SOLICITADA: "Solicitada",
+                                      ASIGNADO_TRADUCTOR: "En Traducción",
+                                      QUALITY_DEVUELTO_TRADUCTOR: "Devuelto por Quality",
+                                      EN_QUALITY_PENDIENTE_ASIGNACION: "Listo para Quality",
+                                      ASIGNADO_QUALITY: "En Calidad (Quality)",
+                                      TRADUCIDO_Y_VERIFICADO: "Aprobada",
+                                      ILEGIBLE_DEVUELTO: "Devuelto (Ilegible)",
+                                      NO_REQUIERE: "No Requiere",
+                                      ILEGIBLE_CORREGIDO: "Ilegible Corregido",
+                                      CORREGIDO_TRADUCTOR_QUALITY: "Corregido por Traductor",
+                                    }[item.estado_traduccion] || item.estado_traduccion || "Solicitada"
+                                  }`}
+                                </span>
+                              ) : null}
+
                               <button
                                 type="button"
                                 onClick={() => abrirModalEditar(item)}
@@ -1146,6 +1176,69 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                               >
                                 <Trash2 size={12} />
                               </button>
+                            </div>
+
+                            {requiereTraduccion && item.estado !== "RECIBIDO" && (!item.estado_traduccion || item.estado_traduccion === "PENDIENTE_TRADUCCION" || item.estado_traduccion === "NO_REQUIERE") ? (
+                              <span
+                                className={`inline-flex items-center gap-1 self-start border px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide 2xl:hidden ${
+                                  item.estado_traduccion === "TRADUCIDO_Y_VERIFICADO"
+                                    ? "border-emerald-200 bg-emerald-100/50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300"
+                                    : item.estado_traduccion === "ILEGIBLE_DEVUELTO" ||
+                                      item.estado_traduccion === "QUALITY_DEVUELTO_TRADUCTOR"
+                                      ? "border-rose-200 bg-rose-100/50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
+                                      : "border-amber-200 bg-amber-100/50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300"
+                                }`}
+                              >
+                                <Languages size={10} />
+                                {`Traducción: ${
+                                  {
+                                    PENDIENTE_TRADUCCION: "Pendiente Enviar",
+                                    SOLICITADA: "Solicitada",
+                                    ASIGNADO_TRADUCTOR: "En Traducción",
+                                    QUALITY_DEVUELTO_TRADUCTOR: "Devuelto por Quality",
+                                    EN_QUALITY_PENDIENTE_ASIGNACION: "Listo para Quality",
+                                    ASIGNADO_QUALITY: "En Calidad (Quality)",
+                                    TRADUCIDO_Y_VERIFICADO: "Aprobada",
+                                    ILEGIBLE_DEVUELTO: "Devuelto (Ilegible)",
+                                    NO_REQUIERE: "No Requiere",
+                                    ILEGIBLE_CORREGIDO: "Ilegible Corregido",
+                                    CORREGIDO_TRADUCTOR_QUALITY: "Corregido por Traductor",
+                                  }[item.estado_traduccion] || item.estado_traduccion || "Solicitada"
+                                }`}
+                              </span>
+                            ) : requiereTraduccion && item.estado !== "RECIBIDO" ? (
+                              <span
+                                title="El documento debe marcarse como RECIBIDO para poder enviarse a traducción"
+                                className="inline-flex items-center gap-1 self-start border border-slate-200 bg-slate-100 px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide text-slate-400 cursor-not-allowed select-none 2xl:hidden dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-600"
+                              >
+                                <Languages size={10} />
+                                Pendiente Recepción
+                              </span>
+                            ) : null}
+
+                            {item.observaciones && item.observaciones !== "Aprobado por Quality" ? (
+                              <p className={`text-[11px] leading-5 2xl:hidden ${style.meta}`}>
+                                {item.observaciones}
+                              </p>
+                            ) : item.estado === "PENDIENTE" ? (
+                              <p className={`text-[11px] italic 2xl:hidden ${style.meta}`}>
+                                Sin observaciones registradas
+                              </p>
+                            ) : null}
+
+                            <div className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-[9.5px] 2xl:hidden ${style.meta}`}>
+                              {item.usuario_actualizador ? (
+                                <div className="flex items-center gap-1">
+                                  <User size={10} />
+                                  <span className="font-medium">{item.usuario_actualizador}</span>
+                                </div>
+                              ) : null}
+                              {item.updated_at ? (
+                                <div className="flex items-center gap-1">
+                                  <Clock size={10} />
+                                  <span>Actualizado: <span className="font-medium">{item.updated_at}</span></span>
+                                </div>
+                              ) : null}
                             </div>
                           </div>
                         </div>
