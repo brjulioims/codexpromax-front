@@ -9,8 +9,8 @@ export default defineConfig({
       strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:9000/',
-        //target: 'https://marital-disbelief-ascent.ngrok-free.dev/',
+        //target: 'http://localhost:9000/',
+        target: 'https://marital-disbelief-ascent.ngrok-free.dev/',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),

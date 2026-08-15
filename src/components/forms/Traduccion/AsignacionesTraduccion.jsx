@@ -81,7 +81,7 @@ export default function AsignacionesTraduccion() {
   }, [usuarios]);
 
   const qualityReviewersList = useMemo(() => {
-    return usuarios.filter((u) => Number(u.rolId) === 7);
+    return usuarios;
   }, [usuarios]);
 
   // Queries
@@ -477,7 +477,7 @@ export default function AsignacionesTraduccion() {
                   <option value="">Seleccione un revisor...</option>
                   {qualityReviewersList.map((user) => (
                     <option key={user.id} value={user.id}>
-                      {user.nombre} ({user.rolNombre || "Quality Control"})
+                      {user.nombre} ({user.rolNombre || user.role || user.rol_nombre || "Usuario"})
                     </option>
                   ))}
                 </select>

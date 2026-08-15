@@ -28,9 +28,11 @@ import {
 } from "../../../../hooks/mutations/useChecklistMutations";
 import { useExpedienteChecklistQuery } from "../../../../hooks/queries/useExpedienteChecklistQuery";
 import { solicitarTraduccionChecklistItem } from "../../../../services/paralegalServices";
+import { reactivarTraduccionParalegal } from "../../../../services/traduccionServices";
 import { usePlantillasChecklistQuery } from "../../../../hooks/queries/usePlantillasChecklistQuery";
 import { useMeQuery } from "../../../../hooks/queries/useMeQuery";
 import { queryKeys } from "../../../../utils/queryKeys";
+import Swal from "sweetalert2";
 
 const CATEGORIA_META = {
   biograficos: {
@@ -322,6 +324,86 @@ export default function DocumentacionExpediente({ expediente = {} }) {
       },
     });
 
+  const { mutate: reactivarTraduccionMutate, isPending: reactivandoTraduccion } =
+    useMutation({
+      mutationFn: ({ itemId, observaciones }) =>
+        reactivarTraduccionParalegal(expedienteId, itemId, {
+          observaciones: `${observaciones ?? ""}`.trim() || undefined,
+          usuario_id: usuarioId,
+        }),
+      onMutate: async ({ itemId }) => {
+        const queryKey = queryKeys.expedienteChecklist.byExpediente(expedienteId);
+        await queryClient.cancelQueries({ queryKey });
+
+        const previousData = queryClient.getQueryData(queryKey);
+
+        queryClient.setQueryData(queryKey, (old) => {
+          if (!Array.isArray(old)) return old;
+          return old.map((item) =>
+            item.id === itemId
+              ? {
+                  ...item,
+                  estado_traduccion: "SOLICITADA",
+                }
+              : item
+          );
+        });
+
+        return { previousData, queryKey };
+      },
+      onSuccess: () => {
+        toast.success("Documento reactivado para traducción correctamente.");
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.expedienteChecklist.byExpediente(expedienteId),
+          exact: false,
+        });
+      },
+      onError: (err, variables, context) => {
+        if (context?.previousData) {
+          queryClient.setQueryData(context.queryKey, context.previousData);
+        }
+        console.error("Error reactivando traducción del item:", err);
+        toast.error(
+          err?.message || "No se pudo reactivar la traducción del documento."
+        );
+      },
+    });
+
+  function abrirModalReactivar(item) {
+    setModalReactivarItemId(item.id);
+    setModalReactivarObs("");
+  }
+
+  function cerrarModalReactivar() {
+    setModalReactivarItemId(null);
+    setModalReactivarObs("");
+  }
+
+  function guardarModalReactivar(item) {
+    if (!usuarioId) {
+      toast.error("No hay usuario autenticado para reactivar el documento");
+      return;
+    }
+
+    const obs = `${modalReactivarObs ?? ""}`.trim();
+
+    cerrarModalReactivar();
+
+    abrirConfirmacion({
+      title: "Reactivar traducción",
+      message: `¿Estás seguro de corregir y volver a enviar a traducción el documento "${item?.titulo_requisito ?? "este documento"}"?`,
+      confirmText: "Sí, reactivar",
+      cancelText: "Cancelar",
+      variant: "primary",
+      icon: Save,
+      onConfirm: () =>
+        reactivarTraduccionMutate({
+          itemId: item.id,
+          observaciones: obs,
+        }),
+    });
+  }
+
   const { mutate: eliminarItem, isPending: eliminandoItem } =
     useDeleteChecklistItemMutation({
       onSuccess: () => {
@@ -370,6 +452,8 @@ export default function DocumentacionExpediente({ expediente = {} }) {
   const [modalEditarItemId, setModalEditarItemId] = useState(null);
   const [modalEditarReqTrad, setModalEditarReqTrad] = useState(false);
   const [modalEditarObs, setModalEditarObs] = useState("");
+  const [modalReactivarItemId, setModalReactivarItemId] = useState(null);
+  const [modalReactivarObs, setModalReactivarObs] = useState("");
 
   const [confirmDialog, setConfirmDialog] = useState({
     open: false,
@@ -1017,6 +1101,22 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                                   return null;
                                 })()
                               )}
+                              {/* Botón de Reactivar Traducción si fue devuelto como Ilegible */}
+                              {requiereTraduccion && item.estado_traduccion === "ILEGIBLE_DEVUELTO" && (
+                                <button
+                                  type="button"
+                                  disabled={reactivandoTraduccion}
+                                  onClick={() => abrirModalReactivar(item)}
+                                  className="inline-flex items-center gap-1 rounded-lg border border-amber-500/40 bg-amber-500 px-2.5 py-1.5 text-[9.5px] font-bold uppercase tracking-wide text-white transition hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed dark:border-amber-600/40 dark:bg-amber-600"
+                                >
+                                  {reactivandoTraduccion ? (
+                                    <Loader2 size={10} className="animate-spin" />
+                                  ) : (
+                                    <Languages size={10} />
+                                  )}
+                                  Enviar Corrección
+                                </button>
+                              )}
 
                               <button
                                 type="button"
@@ -1353,6 +1453,84 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                       value={modalEditarObs}
                       onChange={(e) => setModalEditarObs(e.target.value)}
                       placeholder="Información adicional del requisito (opcional)"
+                      className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3.5 py-3 text-[13px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    />
+                  </label>
+                </div>
+              </ModalGeneral>
+            );
+          })()
+        : null}
+
+      {modalReactivarItemId
+        ? (() => {
+            const itemReactivando = checklistVisible.find(
+              (it) => String(it.id) === String(modalReactivarItemId)
+            );
+            if (!itemReactivando) return null;
+
+            return (
+              <ModalGeneral
+                open
+                onClose={cerrarModalReactivar}
+                header={
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-amber-500/20 bg-amber-50 text-amber-500 dark:border-amber-900/50 dark:bg-amber-950/40">
+                      <Languages size={22} className="text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                        Reactivar Traducción
+                      </p>
+                      <h2 className="mt-0.5 truncate text-[17px] font-bold text-slate-800 dark:text-slate-100 sm:text-[18px]">
+                        {itemReactivando.titulo_requisito}
+                      </h2>
+                    </div>
+                  </div>
+                }
+                size="lg"
+                zIndex={10000}
+                footer={
+                  <>
+                    <button
+                      type="button"
+                      onClick={cerrarModalReactivar}
+                      className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-[12px] font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                    >
+                      <X size={14} />
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => guardarModalReactivar(itemReactivando)}
+                      disabled={reactivandoTraduccion}
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#0d1b5e] px-5 py-2.5 text-[12px] font-bold uppercase tracking-wide text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {reactivandoTraduccion ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Save size={14} />
+                      )}
+                      {reactivandoTraduccion ? "Guardando..." : "Reactivar"}
+                    </button>
+                  </>
+                }
+              >
+                <div className="space-y-5">
+                  <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300">
+                    <p className="font-semibold">Documento devuelto por traducción ilegible.</p>
+                    <p className="mt-1">Al reactivar, se notificará al traductor para que proceda con el documento corregido.</p>
+                  </div>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-[12px] font-semibold text-slate-600 dark:text-slate-300">
+                      Observaciones de la corrección
+                    </span>
+                    <textarea
+                      rows={3}
+                      value={modalReactivarObs}
+                      onChange={(e) => setModalReactivarObs(e.target.value)}
+                      placeholder="Indica qué se corrigió o agrega detalles para el traductor (opcional)"
                       className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3.5 py-3 text-[13px] text-slate-800 outline-none ring-[#0d1b5e]/20 transition focus:border-[#0d1b5e] focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                     />
                   </label>
