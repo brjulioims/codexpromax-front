@@ -27,6 +27,7 @@ const renderEstadoBadge = (estado) => {
     // Solicited / Pending
     SOLICITADA: { text: "Solicitada", classes: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300" },
     REDACCION_SOLICITADA: { text: "Solicitada", classes: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300" },
+    SOLICITADA_PARALEGAL: { text: "Solicitada", classes: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300" },
     PENDIENTE_ASIGNACION: { text: "Pendiente Asignación", classes: "bg-slate-100 text-slate-800 dark:bg-slate-800/40 dark:text-slate-400" },
     
     // Assigned to redactor
@@ -50,12 +51,16 @@ const renderEstadoBadge = (estado) => {
     ENVIADO_QUALITY: { text: "En revisión Quality", classes: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300" },
     ENVIADO_A_QUALITY: { text: "En revisión Quality", classes: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300" },
     EN_QUALITY: { text: "En revisión Quality", classes: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300" },
+    EN_QUALITY_PENDIENTE_ASIGNACION: { text: "Listo para Quality", classes: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300" },
+    CORREGIDO_REDACTOR_QUALITY: { text: "Corregido p/ Quality", classes: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300" },
+    ASIGNADO_QUALITY: { text: "En revisión Quality", classes: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300" },
 
     // Rejected by Quality
     RECHAZADO_QUALITY: { text: "Devuelto por Quality", classes: "bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200" },
     RECHAZADA_QUALITY: { text: "Devuelto por Quality", classes: "bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200" },
     DEVUELTO_QUALITY: { text: "Devuelto por Quality", classes: "bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200" },
     DEVUELTO_POR_QUALITY: { text: "Devuelto por Quality", classes: "bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200" },
+    QUALITY_DEVUELTO_REDACTOR: { text: "Devuelto por Quality", classes: "bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200" },
 
     // Approved
     APROBADO_QUALITY: { text: "Aprobada por Quality", classes: "bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300" },
@@ -106,15 +111,14 @@ export default function MisAuditoriasRedaccion() {
     enabled: Number.isFinite(currentUserId),
   });
 
-  // Mutations
   const approveMutation = useMutation({
     mutationFn: ({ expedienteId, payload }) =>
-      aprobarQualityRedaccion(expedienteId, payload),
+      enviarTraduccionRedaccion(expedienteId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["redacciones", "quality", currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ["redacciones"] });
       Swal.fire({
-        title: "Aprobado",
-        text: "La declaración ha sido aprobada exitosamente.",
+        title: "Aprobada y Enviada",
+        text: "La declaración ha sido aprobada y enviada directamente al departamento de traducción.",
         icon: "success",
         confirmButtonColor: "#0e183f",
       });
@@ -123,7 +127,7 @@ export default function MisAuditoriasRedaccion() {
     onError: (error) => {
       Swal.fire({
         title: "Error",
-        text: error.message || "Ocurrió un error al aprobar la declaración.",
+        text: error.message || "Ocurrió un error al procesar la aprobación y envío.",
         icon: "error",
         confirmButtonColor: "#0e183f",
       });
@@ -198,13 +202,13 @@ export default function MisAuditoriasRedaccion() {
   const handleApprove = () => {
     if (!selectedTicket) return;
     Swal.fire({
-      title: "¿Aprobar declaración?",
-      text: "Se marcará la declaración redactada como aprobada por Quality.",
-      icon: "warning",
+      title: "¿Aprobar y enviar a traducción?",
+      text: "Se aprobará la declaración y se enviará directamente al departamento de traducción.",
+      icon: "question",
       showCancelButton: true,
-      confirmButtonText: "Sí, aprobar",
+      confirmButtonText: "Sí, aprobar y enviar",
       cancelButtonText: "Cancelar",
-      confirmButtonColor: "#0e183f",
+      confirmButtonColor: "#10b981",
       cancelButtonColor: "#6b7280",
     }).then((result) => {
       if (result.isConfirmed) {
@@ -213,7 +217,8 @@ export default function MisAuditoriasRedaccion() {
           payload: {
             redaccion_id: selectedTicket.id || selectedTicket.redaccion_id,
             usuario_id: currentUserId,
-            observaciones: "Aprobado por Quality Redacción",
+            archivo_declaracion_url: selectedTicket.archivo_declaracion_url,
+            observaciones: "Aprobado y enviado automáticamente por Quality Control"
           }
         });
       }
@@ -299,6 +304,7 @@ export default function MisAuditoriasRedaccion() {
     {
       header: "Estado",
       accessor: "estado_redaccion",
+      align: "center",
       render: (val) => renderEstadoBadge(val)
     },
     {
@@ -487,7 +493,7 @@ export default function MisAuditoriasRedaccion() {
             <footer className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
                 <button type="button" onClick={closeModal} className="h-10 rounded-lg px-4 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">Cerrar</button>
                 
-                {["EN_REVISION_QUALITY", "EN_QUALITY", "ENVIADO_QUALITY", "ENVIADO_A_QUALITY"].includes(selectedTicket.estado_redaccion) && (
+                {["EN_REVISION_QUALITY", "EN_QUALITY", "ENVIADO_QUALITY", "ENVIADO_A_QUALITY", "ASIGNADO_QUALITY", "CORREGIDO_REDACTOR_QUALITY"].includes(selectedTicket.estado_redaccion) && (
                   <>
                     <button
                       type="button"

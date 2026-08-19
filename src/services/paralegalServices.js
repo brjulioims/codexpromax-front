@@ -114,8 +114,8 @@ function buildRedaccionPayload(payload) {
   }
 
   return {
-    origen: `${payload?.origen ?? ""}`.trim(),
-    prioridad: `${payload?.prioridad ?? ""}`.trim(),
+    origen_solicitud: `${payload?.origen_solicitud ?? payload?.origen ?? "SOLICITUD_GENERAL"}`.trim(),
+    es_urgente: payload?.es_urgente == null ? false : Boolean(payload.es_urgente),
     observaciones: `${payload?.observaciones ?? ""}`.trim(),
     usuario_id,
   };
@@ -332,7 +332,7 @@ export async function solicitarRedaccion(id, payload) {
 
   try {
     const response = await fetch(
-      `${PARALEGAL_API_URL}/expedientes/${expedienteId}/redaccion`,
+      `/api/expedientes/${expedienteId}/redaccion/solicitar`,
       {
         method: "POST",
         headers: buildHeaders(true),
