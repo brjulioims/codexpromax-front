@@ -75,6 +75,7 @@ export const workflowInvalidations = {
     iniciarToma: [queryKeys.redacciones.redactor],
     enviarQuality: [
       queryKeys.redacciones.redactor,
+      queryKeys.redacciones.pendientesQuality,
       queryKeys.redacciones.quality,
     ],
     rechazarQuality: [
@@ -119,5 +120,17 @@ export const workflowInvalidations = {
 };
 
 export function invalidateWorkflowQueries(queryClient, keys) {
-  return Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
+  return Promise.all(
+    keys.map(async (queryKey) => {
+      await queryClient.invalidateQueries({
+        queryKey,
+        refetchType: "all",
+      });
+
+      await queryClient.refetchQueries({
+        queryKey,
+        type: "all",
+      });
+    })
+  );
 }

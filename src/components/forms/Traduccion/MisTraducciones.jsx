@@ -268,7 +268,7 @@ export default function MisTraducciones() {
           const isEditable = ["ASIGNADO_TRADUCTOR", "QUALITY_DEVUELTO_TRADUCTOR", "ILEGIBLE_CORREGIDO"].includes(row.estado_traduccion);
           
           if (row.estado_traduccion === "TRADUCIDO_Y_VERIFICADO") {
-            return <span className="text-xs text-emerald-500 font-semibold uppercase tracking-wider">Completado</span>;
+            return <span className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-100/50 px-2 py-0.5 text-[9.5px] font-black uppercase tracking-wide text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">Completado</span>;
           }
           if (row.estado_traduccion === "ILEGIBLE_DEVUELTO") {
             return <span className="text-xs text-rose-500 font-semibold uppercase tracking-wider">Reportado Ilegible</span>;
