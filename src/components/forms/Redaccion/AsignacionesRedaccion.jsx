@@ -8,6 +8,7 @@ import {
   History,
   RefreshCw
 } from "lucide-react";
+import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 
 import HeaderBox from "../../ui/HeaderBox";
@@ -168,12 +169,7 @@ export default function AsignacionesRedaccion() {
       asignarRedactor(expedienteId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["redacciones", "pendientes-redactor"] });
-      Swal.fire({
-        title: "Asignado",
-        text: "El redactor ha sido asignado exitosamente.",
-        icon: "success",
-        confirmButtonColor: "#0e183f",
-      });
+      toast.success("El redactor ha sido asignado exitosamente.");
       closeModal();
     },
     onError: (error) => {
@@ -191,12 +187,7 @@ export default function AsignacionesRedaccion() {
       asignarQuality(expedienteId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["redacciones", "pendientes-quality"] });
-      Swal.fire({
-        title: "Asignado",
-        text: "El revisor de Quality Redacción ha sido asignado exitosamente.",
-        icon: "success",
-        confirmButtonColor: "#0e183f",
-      });
+      toast.success("El revisor de Quality Redacción ha sido asignado exitosamente.");
       closeModal();
     },
     onError: (error) => {
@@ -214,12 +205,7 @@ export default function AsignacionesRedaccion() {
       reasignarRedactor(expedienteId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["redacciones", "historial-asignador", currentUserId] });
-      Swal.fire({
-        title: "Reasignado",
-        text: "El redactor ha sido reasignado exitosamente.",
-        icon: "success",
-        confirmButtonColor: "#0e183f",
-      });
+      toast.success("El redactor ha sido reasignado exitosamente.");
       closeModal();
     },
     onError: (error) => {
@@ -237,12 +223,7 @@ export default function AsignacionesRedaccion() {
       reasignarQuality(expedienteId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["redacciones", "historial-asignador", currentUserId] });
-      Swal.fire({
-        title: "Reasignado",
-        text: "El revisor de Quality ha sido reasignado exitosamente.",
-        icon: "success",
-        confirmButtonColor: "#0e183f",
-      });
+      toast.success("El revisor de Quality ha sido reasignado exitosamente.");
       closeModal();
     },
     onError: (error) => {

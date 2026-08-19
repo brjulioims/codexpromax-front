@@ -10,6 +10,7 @@ import {
   Eye,
   Languages
 } from "lucide-react";
+import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 
 import HeaderBox from "../../ui/HeaderBox";
@@ -116,12 +117,7 @@ export default function MisAuditoriasRedaccion() {
       enviarTraduccionRedaccion(expedienteId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["redacciones"] });
-      Swal.fire({
-        title: "Aprobada y Enviada",
-        text: "La declaración ha sido aprobada y enviada directamente al departamento de traducción.",
-        icon: "success",
-        confirmButtonColor: "#0e183f",
-      });
+      toast.success("La declaración ha sido aprobada y enviada directamente al departamento de traducción.");
       closeModal();
     },
     onError: (error) => {
@@ -139,12 +135,7 @@ export default function MisAuditoriasRedaccion() {
       rechazarQualityRedaccion(expedienteId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["redacciones", "quality", currentUserId] });
-      Swal.fire({
-        title: "Rechazado",
-        text: "La declaración ha sido rechazada y devuelta al redactor.",
-        icon: "success",
-        confirmButtonColor: "#0e183f",
-      });
+      toast.success("La declaración ha sido rechazada y devuelta al redactor.");
       closeModal();
     },
     onError: (error) => {
@@ -162,12 +153,7 @@ export default function MisAuditoriasRedaccion() {
       enviarTraduccionRedaccion(expedienteId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["redacciones", "quality", currentUserId] });
-      Swal.fire({
-        title: "Enviado",
-        text: "La declaración ha sido enviada al departamento de traducción.",
-        icon: "success",
-        confirmButtonColor: "#0e183f",
-      });
+      toast.success("La declaración ha sido enviada al departamento de traducción.");
       closeModal();
     },
     onError: (error) => {
