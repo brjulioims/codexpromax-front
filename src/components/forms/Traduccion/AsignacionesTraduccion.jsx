@@ -14,6 +14,7 @@ import Swal from "sweetalert2";
 import HeaderBox from "../../ui/HeaderBox";
 import ModalGeneral from "../../ui/ModalGeneral";
 import Table from "../../ui/Table";
+import { invalidateWorkflowQueries, workflowInvalidations } from "../../../utils/queryKeys";
 import { useUsuariosQuery } from "../../../hooks/queries/useUsuariosQuery";
 import {
   getPendientesTraductor,
@@ -131,8 +132,8 @@ export default function AsignacionesTraduccion() {
   const assignTraductorMutation = useMutation({
     mutationFn: ({ expedienteId, documentoId, payload }) =>
       asignarTraductor(expedienteId, documentoId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["traducciones", "pendientes-traductor"] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.traduccion.asignarTraductor);
       toast.success("El traductor ha sido asignado exitosamente.");
       closeModal();
     },
@@ -149,8 +150,8 @@ export default function AsignacionesTraduccion() {
   const assignQualityMutation = useMutation({
     mutationFn: ({ expedienteId, documentoId, payload }) =>
       asignarQuality(expedienteId, documentoId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["traducciones", "pendientes-quality"] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.traduccion.asignarQuality);
       toast.success("El revisor de Quality ha sido asignado exitosamente.");
       closeModal();
     },
@@ -167,8 +168,8 @@ export default function AsignacionesTraduccion() {
   const reasignarTraductorMutation = useMutation({
     mutationFn: ({ expedienteId, documentoId, payload }) =>
       reasignarTraductor(expedienteId, documentoId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["traducciones", "historial-asignador", currentUserId] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.traduccion.reasignarTraductor);
       toast.success("El traductor ha sido reasignado exitosamente.");
       closeModal();
     },
@@ -185,8 +186,8 @@ export default function AsignacionesTraduccion() {
   const reasignarQualityMutation = useMutation({
     mutationFn: ({ expedienteId, documentoId, payload }) =>
       reasignarQuality(expedienteId, documentoId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["traducciones", "historial-asignador", currentUserId] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.traduccion.reasignarQuality);
       toast.success("El revisor de Quality ha sido reasignado exitosamente.");
       closeModal();
     },

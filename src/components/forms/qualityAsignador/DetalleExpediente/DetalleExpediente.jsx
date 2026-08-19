@@ -23,6 +23,7 @@ import DocumentacionExpediente from "./DocumentacionExpediente";
 import ModalGeneral from "../../../ui/ModalGeneral";
 import { getRedaccionEstado } from "../../../../services/redaccionServices";
 import { solicitarRedaccion } from "../../../../services/paralegalServices";
+import { invalidateWorkflowQueries, workflowInvalidations } from "../../../../utils/queryKeys";
 
 export default function DetalleExpediente() {
   const navigate = useNavigate();
@@ -60,13 +61,16 @@ export default function DetalleExpediente() {
       observaciones: observacionesRedaccion.trim(),
       usuario_id: currentUserId
     }),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Solicitud de redacción creada correctamente.");
       setModalSolicitarOpen(false);
       setObservacionesRedaccion("");
       setEsUrgente(false);
+      await invalidateWorkflowQueries(
+        queryClient,
+        workflowInvalidations.quality.solicitarRedaccion(expedienteId)
+      );
       refetchRedaccion();
-      queryClient.invalidateQueries({ queryKey: ["redacciones"] });
     },
     onError: (err) => {
       console.error("Error al solicitar redacción:", err);

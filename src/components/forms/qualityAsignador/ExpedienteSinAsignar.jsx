@@ -8,6 +8,7 @@ import Swal from "sweetalert2";
 import HeaderBox from "../../ui/HeaderBox";
 import ModalFiltro from "../../ui/ModalFiltro";
 import Table from "../../ui/Table";
+import { invalidateWorkflowQueries, workflowInvalidations } from "../../../utils/queryKeys";
 import {
   asignarExpediente,
   getQualityBandeja,
@@ -39,9 +40,8 @@ export default function ExpedienteSinAsignar() {
   const { data: usuarios = [] } = useUsuariosQuery();
   const { mutateAsync: asignarMutate, isPending: savingAssign } = useMutation({
     mutationFn: ({ expedienteId, payload }) => asignarExpediente(expedienteId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expedientes", "quality-bandeja"] });
-      queryClient.invalidateQueries({ queryKey: ["expedientes", "asignados"] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.quality.asignarExpediente);
     },
   });
 
