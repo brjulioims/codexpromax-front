@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BriefcaseBusiness, Filter } from "lucide-react";
+import toast from "react-hot-toast";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
@@ -180,12 +181,7 @@ export default function ExpedienteAsignado() {
   ];
 
   async function handleApplyFilters() {
-    await Swal.fire({
-      icon: "success",
-      title: "Filtros aplicados",
-      text: "La tabla fue actualizada con los filtros seleccionados.",
-      confirmButtonColor: "#0e183f",
-    });
+    toast.success("La tabla fue actualizada con los filtros seleccionados.");
     setFilters(draftFilters);
     setFilterOpen(false);
   }
@@ -254,12 +250,7 @@ export default function ExpedienteAsignado() {
         },
       });
 
-      await Swal.fire({
-        icon: "success",
-        title: "Paralegal actualizado",
-        text: "El expediente fue actualizado correctamente.",
-        confirmButtonColor: "#0e183f",
-      });
+      toast.success("El expediente fue actualizado correctamente.");
 
       setEditOpen(false);
       setSelectedExpediente(null);

@@ -10,6 +10,7 @@ import {
   BookOpen,
   Calendar
 } from "lucide-react";
+import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 
 import HeaderBox from "../../ui/HeaderBox";
@@ -119,12 +120,7 @@ export default function MisRedacciones() {
       registrarContactoRedactor(expedienteId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["redacciones", "redactor", currentUserId] });
-      Swal.fire({
-        title: "Registrado",
-        text: "El contacto con el cliente ha sido registrado exitosamente.",
-        icon: "success",
-        confirmButtonColor: "#fe7405",
-      });
+      toast.success("El contacto con el cliente ha sido registrado exitosamente.");
       closeModal();
     },
     onError: (error) => {
@@ -142,12 +138,7 @@ export default function MisRedacciones() {
       tomaDeclaracionRedactor(expedienteId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["redacciones", "redactor", currentUserId] });
-      Swal.fire({
-        title: "Iniciado",
-        text: "Se ha iniciado la etapa de toma de declaración.",
-        icon: "success",
-        confirmButtonColor: "#fe7405",
-      });
+      toast.success("Se ha iniciado la etapa de toma de declaración.");
       closeModal();
     },
     onError: (error) => {
@@ -169,12 +160,7 @@ export default function MisRedacciones() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["redacciones", "redactor", currentUserId] });
-      Swal.fire({
-        title: "Enviado",
-        text: "La declaración redactada ha sido enviada a revisión de Quality Control.",
-        icon: "success",
-        confirmButtonColor: "#fe7405",
-      });
+      toast.success("La declaración redactada ha sido enviada a revisión de Quality Control.");
       closeModal();
     },
     onError: (error) => {

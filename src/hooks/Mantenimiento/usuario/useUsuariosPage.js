@@ -16,6 +16,7 @@ import {
   buildUserOptions,
   filterUserOptions,
 } from "../../../utils/Mantenimiento/usuario/usuarios.helpers";
+import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 
 export function useUsuariosPage() {
@@ -134,13 +135,7 @@ export function useUsuariosPage() {
     });
     setDraftPassword("");
 
-    await Swal.fire({
-      title: "CAMBIOS GUARDADOS",
-      text: `SE ACTUALIZARON LOS DATOS DE "${draftUser.name}" CORRECTAMENTE`,
-      icon: "success",
-      confirmButtonText: "ACEPTAR",
-      confirmButtonColor: "#0e183f",
-    });
+    toast.success(`SE ACTUALIZARON LOS DATOS DE "${draftUser.name}" CORRECTAMENTE`);
   };
 
   const toggleStatus = async (user) => {
@@ -169,13 +164,7 @@ export function useUsuariosPage() {
         },
       });
 
-      await Swal.fire({
-        title: `USUARIO ${isCurrentlyActive ? "INACTIVADO" : "ACTIVADO"}`,
-        text: `SE ${isCurrentlyActive ? "INACTIVÓ" : "ACTIVÓ"} A "${user.name}" CORRECTAMENTE`,
-        icon: "success",
-        confirmButtonText: "ACEPTAR",
-        confirmButtonColor: "#0e183f",
-      });
+      toast.success(`SE ${isCurrentlyActive ? "INACTIVÓ" : "ACTIVÓ"} A "${user.name}" CORRECTAMENTE`);
     } catch (error) {
       await Swal.fire({
         icon: "error",
