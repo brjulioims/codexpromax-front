@@ -49,15 +49,10 @@ export default function ExpedienteAsignado() {
         .filter(Number.isFinite)
     );
   }, [usuarios]);
-  const isParalegalUser = paralegalRoleIds.has(currentUserRoleId);
+  const isParalegalUser = false;
   const { data: expedientesAsignados = [], isLoading } = useQuery({
-    queryKey: ["expedientes", "asignados", isParalegalUser ? currentUserId : "all"],
-    queryFn: () =>
-      getExpedientesAsignados(
-        isParalegalUser && Number.isFinite(currentUserId)
-          ? { paralegal_id: currentUserId }
-          : {}
-      ),
+    queryKey: ["expedientes", "asignados", "all"],
+    queryFn: () => getExpedientesAsignados({}),
   });
   const { mutateAsync: reasignarMutate, isPending: savingEdit } = useMutation({
     mutationFn: ({ expedienteId, payload }) =>

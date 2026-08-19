@@ -210,6 +210,7 @@ export default function MisAuditoriasTraduccion() {
     {
       header: "Estado",
       accessor: "estado_traduccion",
+      align: "center",
       render: (val) => renderEstadoBadge(val)
     },
     {

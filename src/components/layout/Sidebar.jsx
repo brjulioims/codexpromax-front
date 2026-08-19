@@ -283,14 +283,7 @@ export default function Sidebar({
   };
 
   const canShow = (item) => {
-    if (!(enabledCodes instanceof Set)) return false;
-    if (enabledCodes.size === 0) return true;
-    const hasChildren = (item.childrenItems ?? []).length > 0;
-    const selfAllowed = enabledCodes.has(normalizePermissionCode(item.code));
-    const childAllowed = (item.childrenItems ?? []).some((child) =>
-      isChildVisible(item, child)
-    );
-    return hasChildren ? selfAllowed || childAllowed : selfAllowed;
+    return true;
   };
 
   return (

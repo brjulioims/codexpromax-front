@@ -287,3 +287,21 @@ export async function enviarTraduccionRedaccion(expedienteId, payload) {
     throw error;
   }
 }
+
+export async function getRedaccionEstado(expedienteId) {
+  try {
+    const response = await fetch(`/api/expedientes/${expedienteId}/redaccion`, {
+      method: "GET",
+      headers: buildHeaders(),
+      credentials: "include",
+    });
+    if (response.status === 404) {
+      return null;
+    }
+    const data = await parseResponse(response, "obtener estado redacción");
+    return data?.data ?? null;
+  } catch (error) {
+    console.error("Error consultando estado redacción", error);
+    return null;
+  }
+}

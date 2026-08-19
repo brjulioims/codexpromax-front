@@ -78,6 +78,11 @@ function normalizarParaMatch(texto) {
     .trim();
 }
 
+function esDeclaracionPersonalEspanol(texto) {
+  const norm = normalizarParaMatch(texto);
+  return norm.includes("declaracion jurada personal en espanol") || norm.includes("declaracion personal en espanol");
+}
+
 function mapCategoriaCatalogo(categoria) {
   const value = `${categoria ?? ""}`.trim().toUpperCase();
 
@@ -242,8 +247,8 @@ function getSelectEstadoStyle(estado) {
   }
 }
 
-export default function DocumentacionExpediente({ expediente = {} }) {
-  const expedienteId = expediente?.id ?? expediente?.expedienteId ?? null;
+export default function DocumentacionExpediente({ expediente = {}, redaccion = null, onSolicitarRedaccion }) {
+  const expedienteId = expediente?.expediente_id ?? expediente?.id ?? expediente?.expedienteId ?? null;
 
   const { data: me } = useMeQuery();
   const usuarioId =
@@ -924,106 +929,150 @@ export default function DocumentacionExpediente({ expediente = {} }) {
                       const style = getItemStyle(item, categoria.id);
                       const IconComp = style.icon;
                       const isDropdownOpen = openDropdownId === item.id;
-                      const requiereTraduccion = Boolean(item.requiere_traduccion) && categoria.id !== "formularios";
+                       const requiereTraduccion = Boolean(item.requiere_traduccion) &&
+                         categoria.id !== "formularios" &&
+                         !esDeclaracionPersonalEspanol(item.titulo_requisito);
 
-                      return (
-                        <div
-                          key={item.id}
-                          className={`${
-                            isDropdownOpen ? "z-40" : "z-0"
-                          } relative py-4 transition-all duration-200 hover:bg-slate-50/40 dark:hover:bg-slate-900/10 ${style.container}`}
-                        >
-                          <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-start 2xl:justify-between">
-                            {/* Left Side: Content & Badges */}
-                            <div className="flex items-start gap-3 min-w-0 flex-1">
-                              <div
-                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full mt-0.5 ${style.iconBox}`}
-                              >
-                                <IconComp size={13} />
-                              </div>
-                              <div className="min-w-0 flex-1 space-y-2">
-                                <h4 className={`text-[13.5px] font-semibold leading-5 ${style.title}`}>
-                                  {item.titulo_requisito}
-                                </h4>
+                       return (
+                         <div
+                           key={item.id}
+                           className={`${
+                             isDropdownOpen ? "z-40" : "z-0"
+                           } relative py-4 transition-all duration-200 hover:bg-slate-50/40 dark:hover:bg-slate-900/10 ${style.container}`}
+                         >
+                           <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-start 2xl:justify-between">
+                             {/* Left Side: Content & Badges */}
+                             <div className="flex items-start gap-3 min-w-0 flex-1">
+                               <div
+                                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full mt-0.5 ${style.iconBox}`}
+                               >
+                                 <IconComp size={13} />
+                               </div>
+                               <div className="min-w-0 flex-1 space-y-2">
+                                 <h4 className={`text-[13.5px] font-semibold leading-5 ${style.title}`}>
+                                   {item.titulo_requisito}
+                                 </h4>
 
-                                {/* Badges Row */}
-                                <div className="flex flex-wrap items-center gap-2">
-                                  {item.estado !== "RECIBIDO" && (
-                                    <span
-                                      className={`inline-flex items-center gap-1.5 select-none ${getSelectEstadoStyle(
-                                        item.estado
-                                      )}`}
-                                    >
-                                      <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
-                                      {formatEstadoLabel(item.estado)}
-                                    </span>
-                                  )}
+                                 {/* Badges Row */}
+                                 <div className="flex flex-wrap items-center gap-2">
+                                   {item.estado !== "RECIBIDO" && (
+                                     <span
+                                       className={`inline-flex items-center gap-1.5 select-none ${getSelectEstadoStyle(
+                                         item.estado
+                                       )}`}
+                                     >
+                                       <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
+                                       {formatEstadoLabel(item.estado)}
+                                     </span>
+                                   )}
 
-                                  {requiereTraduccion && (() => {
-                                    const yaEnviado =
-                                      item.estado_traduccion &&
-                                      item.estado_traduccion !== "PENDIENTE_TRADUCCION" &&
-                                      item.estado_traduccion !== "NO_REQUIERE";
+                                   {requiereTraduccion && (() => {
+                                     const yaEnviado =
+                                       item.estado_traduccion &&
+                                       item.estado_traduccion !== "PENDIENTE_TRADUCCION" &&
+                                       item.estado_traduccion !== "NO_REQUIERE";
 
-                                    const formatEstadoTraduccionLabel = (estado) => {
-                                      const map = {
-                                        PENDIENTE_TRADUCCION: "Pendiente Enviar",
-                                        SOLICITADA: "Solicitada",
-                                        ASIGNADO_TRADUCTOR: "En Traducción",
-                                        QUALITY_DEVUELTO_TRADUCTOR: "Devuelto por Quality",
-                                        EN_QUALITY_PENDIENTE_ASIGNACION: "Listo para Quality",
-                                        ASIGNADO_QUALITY: "En Calidad (Quality)",
-                                        TRADUCIDO_Y_VERIFICADO: "Aprobada",
-                                        ILEGIBLE_DEVUELTO: "Devuelto (Ilegible)",
-                                        NO_REQUIERE: "No Requiere",
-                                        ILEGIBLE_CORREGIDO: "Ilegible Corregido",
-                                        CORREGIDO_TRADUCTOR_QUALITY: "Corregido por Traductor",
-                                      };
-                                      return map[estado] || estado || "Solicitada";
-                                    };
+                                     const formatEstadoTraduccionLabel = (estado) => {
+                                       const map = {
+                                         PENDIENTE_TRADUCCION: "Pendiente Enviar",
+                                         SOLICITADA: "Solicitada",
+                                         ASIGNADO_TRADUCTOR: "En Traducción",
+                                         QUALITY_DEVUELTO_TRADUCTOR: "Devuelto por Quality",
+                                         EN_QUALITY_PENDIENTE_ASIGNACION: "Listo para Quality",
+                                         ASIGNADO_QUALITY: "En Calidad (Quality)",
+                                         TRADUCIDO_Y_VERIFICADO: "Aprobada",
+                                         ILEGIBLE_DEVUELTO: "Devuelto (Ilegible)",
+                                         NO_REQUIERE: "No Requiere",
+                                         ILEGIBLE_CORREGIDO: "Ilegible Corregido",
+                                         CORREGIDO_TRADUCTOR_QUALITY: "Corregido por Traductor",
+                                       };
+                                       return map[estado] || estado || "Solicitada";
+                                     };
 
-                                    if (yaEnviado) {
-                                      const aprobado = item.estado_traduccion === "TRADUCIDO_Y_VERIFICADO";
-                                      const devuelto =
-                                         item.estado_traduccion === "ILEGIBLE_DEVUELTO" ||
-                                         item.estado_traduccion === "QUALITY_DEVUELTO_TRADUCTOR";
-                                      const badgeClasses = aprobado
-                                        ? "border-emerald-200 bg-emerald-100/50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300"
-                                        : devuelto
-                                          ? "border-rose-200 bg-rose-100/50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
-                                          : "border-amber-200 bg-amber-100/50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300";
+                                     if (yaEnviado) {
+                                       const aprobado = item.estado_traduccion === "TRADUCIDO_Y_VERIFICADO";
+                                       const devuelto =
+                                          item.estado_traduccion === "ILEGIBLE_DEVUELTO" ||
+                                          item.estado_traduccion === "QUALITY_DEVUELTO_TRADUCTOR";
+                                       const badgeClasses = aprobado
+                                         ? "border-emerald-200 bg-emerald-100/50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300"
+                                         : devuelto
+                                           ? "border-rose-200 bg-rose-100/50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
+                                           : "border-amber-200 bg-amber-100/50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300";
 
-                                      return (
-                                        <span
-                                          className={`hidden 2xl:inline-flex items-center gap-1 border px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide ${badgeClasses}`}
-                                        >
-                                          <Languages size={10} />
-                                          {`Traducción: ${formatEstadoTraduccionLabel(item.estado_traduccion)}`}
-                                        </span>
-                                      );
-                                    }
+                                       return (
+                                         <span
+                                           className={`hidden 2xl:inline-flex items-center gap-1 border px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide ${badgeClasses}`}
+                                         >
+                                           <Languages size={10} />
+                                           {`Traducción: ${formatEstadoTraduccionLabel(item.estado_traduccion)}`}
+                                         </span>
+                                       );
+                                     }
 
-                                    // Si requiere traducción pero aún no está en RECIBIDO, mostramos "Pendiente Recepción"
-                                    if (item.estado !== "RECIBIDO") {
-                                      return (
-                                        <span
-                                          title="El documento debe marcarse como RECIBIDO para poder enviarse a traducción"
-                                          className="hidden 2xl:inline-flex items-center gap-1 border border-slate-200 bg-slate-100 px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide text-slate-400 cursor-not-allowed select-none dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-600"
-                                        >
-                                          <Languages size={10} />
-                                          Pendiente Recepción
-                                        </span>
-                                      );
-                                    }
+                                     // Si requiere traducción pero aún no está en RECIBIDO, mostramos "Pendiente Recepción"
+                                     if (item.estado !== "RECIBIDO") {
+                                       return (
+                                         <span
+                                           title="El documento debe marcarse como RECIBIDO para poder enviarse a traducción"
+                                           className="hidden 2xl:inline-flex items-center gap-1 border border-slate-200 bg-slate-100 px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide text-slate-400 cursor-not-allowed select-none dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-600"
+                                         >
+                                           <Languages size={10} />
+                                           Pendiente Recepción
+                                         </span>
+                                       );
+                                     }
 
-                                    return null;
-                                  })()}
+                                     return null;
+                                   })()}
 
-                                  {!requiereTraduccion && (
-                                    <span className="inline-flex items-center gap-1 border border-slate-200/60 bg-slate-50/70 px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide text-slate-400 dark:border-slate-800 dark:bg-slate-900/30 dark:text-slate-500">
-                                      No requiere traducción
-                                    </span>
-                                  )}
+                                   {!requiereTraduccion && !esDeclaracionPersonalEspanol(item.titulo_requisito) && (
+                                     <span className="inline-flex items-center gap-1 border border-slate-200/60 bg-slate-50/70 px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide text-slate-400 dark:border-slate-800 dark:bg-slate-900/30 dark:text-slate-500">
+                                       No requiere traducción
+                                     </span>
+                                   )}
+
+                                   {esDeclaracionPersonalEspanol(item.titulo_requisito) && (
+                                     <div className="flex flex-wrap items-center gap-1.5">
+                                       <span className="inline-flex items-center gap-1 border border-[#fe7405]/20 bg-[#fe7405]/10 px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide text-[#e06300] dark:border-[#fe7405]/30 dark:bg-[#fe7405]/10">
+                                         <FilePenLine size={10} />
+                                         Requiere Redacción
+                                       </span>
+                                       {redaccion && (
+                                         (() => {
+                                           const formatEstadoRedaccionLabel = (estado) => {
+                                             const m = {
+                                               SOLICITADA_PARALEGAL: "Solicitada",
+                                               ASIGNADO_REDACTOR: "Asignada a Redactor",
+                                               CONTACTO_REGISTRADO: "Contacto Registrado",
+                                               EN_TOMA_DECLARACION: "Toma de Declaración",
+                                               EN_QUALITY_PENDIENTE_ASIGNACION: "Listo para Quality",
+                                               CORREGIDO_REDACTOR_QUALITY: "Corregido p/ Quality",
+                                               ASIGNADO_QUALITY: "En revisión Quality",
+                                               QUALITY_DEVUELTO_REDACTOR: "Devuelta por Quality",
+                                               APROBADO_QUALITY: "Aprobada por Quality",
+                                               ENVIADO_A_TRADUCCION: "Enviada a Traducción"
+                                             };
+                                             return m[estado] || estado;
+                                           };
+                                           const isFinished = ["APROBADO_QUALITY", "ENVIADO_A_TRADUCCION"].includes(redaccion.estado_redaccion);
+                                           const isRejected = ["QUALITY_DEVUELTO_REDACTOR"].includes(redaccion.estado_redaccion);
+                                           
+                                           return (
+                                             <span className={`inline-flex items-center gap-1 border px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide ${
+                                               isFinished
+                                                 ? "border-emerald-200 bg-emerald-50/50 text-emerald-600 dark:border-emerald-900/30 dark:bg-emerald-950/20"
+                                                 : isRejected
+                                                   ? "border-rose-200 bg-rose-50/50 text-rose-600 dark:border-rose-900/30 dark:bg-rose-950/20"
+                                                   : "border-blue-200 bg-blue-50/50 text-blue-600 dark:border-blue-900/30 dark:bg-blue-950/20"
+                                             }`}>
+                                               {formatEstadoRedaccionLabel(redaccion.estado_redaccion)}
+                                             </span>
+                                           );
+                                         })()
+                                       )}
+                                     </div>
+                                   )}
                                 </div>
 
                                 {/* Observations */}
@@ -1057,6 +1106,18 @@ export default function DocumentacionExpediente({ expediente = {} }) {
 
                             {/* Right Side: Actions (Edit, Delete, Enviar Traducción) */}
                             <div className="flex flex-wrap items-center gap-1.5 self-start 2xl:mt-0.5 2xl:shrink-0">
+                              {/* Botón de Solicitar Redacción si es Declaración Jurada Personal en Español, está Recibido y aún no se ha solicitado */}
+                              {esDeclaracionPersonalEspanol(item.titulo_requisito) && item.estado === "RECIBIDO" && !redaccion && (
+                                <button
+                                  type="button"
+                                  onClick={onSolicitarRedaccion}
+                                  className="inline-flex items-center gap-1 rounded-lg border border-[#fe7405]/40 bg-[#fe7405] px-2.5 py-1.5 text-[9.5px] font-bold uppercase tracking-wide text-white transition hover:bg-[#e06300] hover:scale-[1.02] active:scale-95 shadow-sm"
+                                >
+                                  <FilePenLine size={10} />
+                                  Solicitar Redacción
+                                </button>
+                              )}
+
                               {/* Botón de Enviar a Traducción si ya está Recibido y requiere traducción pero no está enviado */}
                               {requiereTraduccion && item.estado === "RECIBIDO" && (
                                 (() => {

@@ -79,11 +79,7 @@ export default function AsignacionesTraduccion() {
 
   // Filter translators and quality reviewers with robust fallback
   const translatorsList = useMemo(() => {
-    const filtered = usuarios.filter((u) => {
-      const rol = `${u.rolNombre ?? u.role ?? u.rol_nombre ?? ""}`.toLowerCase();
-      return rol.includes("trad") || rol.includes("translator");
-    });
-    return filtered.length > 0 ? filtered : usuarios;
+    return usuarios;
   }, [usuarios]);
 
   const qualityReviewersList = useMemo(() => {
@@ -352,6 +348,7 @@ export default function AsignacionesTraduccion() {
       {
         header: "Estado",
         accessor: "estado_traduccion",
+        align: "center",
         render: (val) => renderEstadoBadge(val)
       }
     ];

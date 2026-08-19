@@ -217,6 +217,7 @@ export default function MisTraducciones() {
     {
       header: "Estado",
       accessor: "estado_traduccion",
+      align: "center",
       render: (val) => renderEstadoBadge(val)
     },
     {
@@ -262,27 +263,41 @@ export default function MisTraducciones() {
         data={filteredData}
         loading={isLoading}
         loadingLabel="Cargando tus asignaciones..."
-        actions={(row) => (
-          <div className="flex items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => handleOpenIlegible(row)}
-              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-red-200 dark:border-red-950 bg-red-50 dark:bg-red-950/20 px-3 py-1 text-xs font-bold text-red-600 dark:text-red-400 transition hover:bg-red-100 dark:hover:bg-red-950/40 active:scale-95"
-            >
-              <ClipboardX size={14} />
-              REPORTAR DAÑADO / ILEGIBLE
-            </button>
+        actions={(row) => {
+          const isEditable = ["ASIGNADO_TRADUCTOR", "QUALITY_DEVUELTO_TRADUCTOR", "ILEGIBLE_CORREGIDO"].includes(row.estado_traduccion);
+          
+          if (row.estado_traduccion === "TRADUCIDO_Y_VERIFICADO") {
+            return <span className="text-xs text-emerald-500 font-semibold uppercase tracking-wider">Completado</span>;
+          }
+          if (row.estado_traduccion === "ILEGIBLE_DEVUELTO") {
+            return <span className="text-xs text-rose-500 font-semibold uppercase tracking-wider">Reportado Ilegible</span>;
+          }
+          if (!isEditable) {
+            return <span className="text-xs text-slate-400 italic">En revisión Quality</span>;
+          }
 
-            <button
-              type="button"
-              onClick={() => handleOpenUpload(row)}
-              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-[#fe7405] px-3.5 py-1 text-xs font-bold text-white shadow-sm transition hover:bg-[#e06300] hover:scale-[1.02] active:scale-95"
-            >
-              <UploadCloud size={14} />
-              ENVIAR A QUALITY
-            </button>
-          </div>
-        )}
+          return (
+            <div className="flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => handleOpenIlegible(row)}
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-red-200 dark:border-red-950 bg-red-50 dark:bg-red-950/20 px-3 py-1 text-xs font-bold text-red-600 dark:text-red-400 transition hover:bg-red-100 dark:hover:bg-red-950/40 active:scale-95"
+              >
+                <ClipboardX size={14} />
+                REPORTAR DAÑADO / ILEGIBLE
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleOpenUpload(row)}
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-[#fe7405] px-3.5 py-1 text-xs font-bold text-white shadow-sm transition hover:bg-[#e06300] hover:scale-[1.02] active:scale-95"
+              >
+                <UploadCloud size={14} />
+                ENVIAR A QUALITY
+              </button>
+            </div>
+          );
+        }}
       />
 
       {/* MODAL: REPORTAR DAÑADO / ILEGIBLE */}
