@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import ModalFiltro from "../../../ui/ModalFiltro";
 import { EMPTY_NEW_USER } from "../../../../utils/Mantenimiento/usuario/usuarios.constants";
@@ -78,13 +79,7 @@ export default function CrearUsuarioModal({
               try {
                 await handleCreateUser();
 
-                await Swal.fire({
-                  title: "USUARIO REGISTRADO",
-                  text: `SE CREÓ "${displayName}" CORRECTAMENTE`,
-                  icon: "success",
-                  confirmButtonText: "ACEPTAR",
-                  confirmButtonColor: "#0e183f",
-                });
+                toast.success(`SE CREÓ "${displayName}" CORRECTAMENTE`);
               } catch {
                 await Swal.fire({
                   icon: "error",
