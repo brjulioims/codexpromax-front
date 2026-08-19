@@ -8,6 +8,7 @@ import Swal from "sweetalert2";
 import HeaderBox from "../../ui/HeaderBox";
 import ModalFiltro from "../../ui/ModalFiltro";
 import Table from "../../ui/Table";
+import { invalidateWorkflowQueries, workflowInvalidations } from "../../../utils/queryKeys";
 import {
   getExpedientesAsignados,
   reasignarParalegal,
@@ -58,8 +59,8 @@ export default function ExpedienteAsignado() {
   const { mutateAsync: reasignarMutate, isPending: savingEdit } = useMutation({
     mutationFn: ({ expedienteId, payload }) =>
       reasignarParalegal(expedienteId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expedientes", "asignados"] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.quality.reasignarExpediente);
     },
   });
 

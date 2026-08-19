@@ -14,6 +14,7 @@ import Swal from "sweetalert2";
 import HeaderBox from "../../ui/HeaderBox";
 import ModalGeneral from "../../ui/ModalGeneral";
 import Table from "../../ui/Table";
+import { invalidateWorkflowQueries, workflowInvalidations } from "../../../utils/queryKeys";
 import { useUsuariosQuery } from "../../../hooks/queries/useUsuariosQuery";
 import {
   getPendientesRedactor,
@@ -167,8 +168,8 @@ export default function AsignacionesRedaccion() {
   const assignRedactorMutation = useMutation({
     mutationFn: ({ expedienteId, payload }) =>
       asignarRedactor(expedienteId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["redacciones", "pendientes-redactor"] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.redaccion.asignarRedactor);
       toast.success("El redactor ha sido asignado exitosamente.");
       closeModal();
     },
@@ -185,8 +186,8 @@ export default function AsignacionesRedaccion() {
   const assignQualityMutation = useMutation({
     mutationFn: ({ expedienteId, payload }) =>
       asignarQuality(expedienteId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["redacciones", "pendientes-quality"] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.redaccion.asignarQuality);
       toast.success("El revisor de Quality Redacción ha sido asignado exitosamente.");
       closeModal();
     },
@@ -203,8 +204,8 @@ export default function AsignacionesRedaccion() {
   const reasignarRedactorMutation = useMutation({
     mutationFn: ({ expedienteId, payload }) =>
       reasignarRedactor(expedienteId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["redacciones", "historial-asignador", currentUserId] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.redaccion.reasignarRedactor);
       toast.success("El redactor ha sido reasignado exitosamente.");
       closeModal();
     },
@@ -221,8 +222,8 @@ export default function AsignacionesRedaccion() {
   const reasignarQualityMutation = useMutation({
     mutationFn: ({ expedienteId, payload }) =>
       reasignarQuality(expedienteId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["redacciones", "historial-asignador", currentUserId] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.redaccion.reasignarQuality);
       toast.success("El revisor de Quality ha sido reasignado exitosamente.");
       closeModal();
     },

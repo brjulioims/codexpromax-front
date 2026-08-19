@@ -16,6 +16,7 @@ import Swal from "sweetalert2";
 import HeaderBox from "../../ui/HeaderBox";
 import ModalGeneral from "../../ui/ModalGeneral";
 import Table from "../../ui/Table";
+import { invalidateWorkflowQueries, workflowInvalidations } from "../../../utils/queryKeys";
 import {
   getMisAsignacionesQuality,
   aprobarQualityRedaccion,
@@ -115,8 +116,8 @@ export default function MisAuditoriasRedaccion() {
   const approveMutation = useMutation({
     mutationFn: ({ expedienteId, payload }) =>
       enviarTraduccionRedaccion(expedienteId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["redacciones"] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.redaccion.enviarTraduccion);
       toast.success("La declaración ha sido aprobada y enviada directamente al departamento de traducción.");
       closeModal();
     },
@@ -133,8 +134,8 @@ export default function MisAuditoriasRedaccion() {
   const rejectMutation = useMutation({
     mutationFn: ({ expedienteId, payload }) =>
       rechazarQualityRedaccion(expedienteId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["redacciones", "quality", currentUserId] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.redaccion.rechazarQuality);
       toast.success("La declaración ha sido rechazada y devuelta al redactor.");
       closeModal();
     },
@@ -151,8 +152,8 @@ export default function MisAuditoriasRedaccion() {
   const sendTraduccionMutation = useMutation({
     mutationFn: ({ expedienteId, payload }) =>
       enviarTraduccionRedaccion(expedienteId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["redacciones", "quality", currentUserId] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.redaccion.enviarTraduccion);
       toast.success("La declaración ha sido enviada al departamento de traducción.");
       closeModal();
     },

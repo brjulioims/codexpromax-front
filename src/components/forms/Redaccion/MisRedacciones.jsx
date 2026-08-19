@@ -16,6 +16,7 @@ import Swal from "sweetalert2";
 import HeaderBox from "../../ui/HeaderBox";
 import ModalGeneral from "../../ui/ModalGeneral";
 import Table from "../../ui/Table";
+import { invalidateWorkflowQueries, workflowInvalidations } from "../../../utils/queryKeys";
 import {
   getMisAsignacionesRedactor,
   registrarContactoRedactor,
@@ -118,8 +119,8 @@ export default function MisRedacciones() {
   const registrarContactoMutation = useMutation({
     mutationFn: ({ expedienteId, payload }) =>
       registrarContactoRedactor(expedienteId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["redacciones", "redactor", currentUserId] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.redaccion.registrarContacto);
       toast.success("El contacto con el cliente ha sido registrado exitosamente.");
       closeModal();
     },
@@ -136,8 +137,8 @@ export default function MisRedacciones() {
   const iniciarTomaMutation = useMutation({
     mutationFn: ({ expedienteId, payload }) =>
       tomaDeclaracionRedactor(expedienteId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["redacciones", "redactor", currentUserId] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.redaccion.iniciarToma);
       toast.success("Se ha iniciado la etapa de toma de declaración.");
       closeModal();
     },
@@ -158,8 +159,8 @@ export default function MisRedacciones() {
       }
       return enviarQualityRedactor(expedienteId, payload);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["redacciones", "redactor", currentUserId] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.redaccion.enviarQuality);
       toast.success("La declaración redactada ha sido enviada a revisión de Quality Control.");
       closeModal();
     },

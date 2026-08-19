@@ -15,6 +15,7 @@ import Swal from "sweetalert2";
 import HeaderBox from "../../ui/HeaderBox";
 import ModalGeneral from "../../ui/ModalGeneral";
 import Table from "../../ui/Table";
+import { invalidateWorkflowQueries, workflowInvalidations } from "../../../utils/queryKeys";
 import {
   getMisAsignacionesQuality,
   aprobarTraduccionQuality,
@@ -76,8 +77,8 @@ export default function MisAuditoriasTraduccion() {
   const approveMutation = useMutation({
     mutationFn: ({ expedienteId, documentoId, payload }) =>
       aprobarTraduccionQuality(expedienteId, documentoId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["traducciones", "quality", currentUserId] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.traduccion.aprobarQuality);
       toast.success("La traduccion ha sido aprobada y verificada exitosamente.");
       closeModal();
     },
@@ -94,8 +95,8 @@ export default function MisAuditoriasTraduccion() {
   const rejectMutation = useMutation({
     mutationFn: ({ expedienteId, documentoId, payload }) =>
       rechazarTraduccionQuality(expedienteId, documentoId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["traducciones", "quality", currentUserId] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.traduccion.rechazarQuality);
       toast.success("La traduccion ha sido rechazada y devuelta al traductor.");
       closeModal();
     },

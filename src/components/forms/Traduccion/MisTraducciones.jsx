@@ -14,6 +14,7 @@ import Swal from "sweetalert2";
 import HeaderBox from "../../ui/HeaderBox";
 import ModalGeneral from "../../ui/ModalGeneral";
 import Table from "../../ui/Table";
+import { invalidateWorkflowQueries, workflowInvalidations } from "../../../utils/queryKeys";
 import {
   getMisAsignacionesTraductor,
   marcarIlegibleTraductor,
@@ -76,8 +77,8 @@ export default function MisTraducciones() {
   const ilegibleMutation = useMutation({
     mutationFn: ({ expedienteId, documentoId, payload }) =>
       marcarIlegibleTraductor(expedienteId, documentoId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["traducciones", "traductor", currentUserId] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.traduccion.marcarIlegible);
       toast.success("El documento ha sido marcado como ilegible y devuelto al Paralegal.");
       closeModal();
     },
@@ -95,8 +96,8 @@ export default function MisTraducciones() {
   const sendQualityMutation = useMutation({
     mutationFn: ({ expedienteId, documentoId, payload }) =>
       enviarTraduccionQualityTraductor(expedienteId, documentoId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["traducciones", "traductor", currentUserId] });
+    onSuccess: async () => {
+      await invalidateWorkflowQueries(queryClient, workflowInvalidations.traduccion.enviarQuality);
       toast.success("La traduccion ha sido enviada a revision de Quality Control.");
       closeModal();
     },
