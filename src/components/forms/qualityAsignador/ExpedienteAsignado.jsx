@@ -8,7 +8,7 @@ import Swal from "sweetalert2";
 import HeaderBox from "../../ui/HeaderBox";
 import ModalFiltro from "../../ui/ModalFiltro";
 import Table from "../../ui/Table";
-import { invalidateWorkflowQueries, workflowInvalidations } from "../../../utils/queryKeys";
+import { invalidateWorkflowQueries, queryKeys, workflowInvalidations } from "../../../utils/queryKeys";
 import {
   getExpedientesAsignados,
   reasignarParalegal,
@@ -53,7 +53,7 @@ export default function ExpedienteAsignado() {
   }, [usuarios]);
   const isParalegalUser = false;
   const { data: expedientesAsignados = [], isLoading } = useQuery({
-    queryKey: ["expedientes", "asignados", "all"],
+    queryKey: queryKeys.expedientes.asignados,
     queryFn: () => getExpedientesAsignados({}),
   });
   const { mutateAsync: reasignarMutate, isPending: savingEdit } = useMutation({

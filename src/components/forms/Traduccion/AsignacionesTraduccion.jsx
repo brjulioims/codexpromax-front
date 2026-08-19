@@ -523,7 +523,7 @@ export default function AsignacionesTraduccion() {
             {activeTab === "historial" && (() => {
               const isFinished = ["TRADUCIDO_Y_VERIFICADO", "NO_REQUIERE"].includes(row.estado_traduccion);
               if (isFinished) {
-                return <span className="text-xs text-slate-400 italic">Completado</span>;
+                return <span className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-100/50 px-2 py-0.5 text-[9.5px] font-black uppercase tracking-wide text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">Completado</span>;
               }
               return (
                 <div className="flex gap-2">

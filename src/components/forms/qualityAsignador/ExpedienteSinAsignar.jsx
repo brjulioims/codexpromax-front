@@ -8,7 +8,7 @@ import Swal from "sweetalert2";
 import HeaderBox from "../../ui/HeaderBox";
 import ModalFiltro from "../../ui/ModalFiltro";
 import Table from "../../ui/Table";
-import { invalidateWorkflowQueries, workflowInvalidations } from "../../../utils/queryKeys";
+import { invalidateWorkflowQueries, queryKeys, workflowInvalidations } from "../../../utils/queryKeys";
 import {
   asignarExpediente,
   getQualityBandeja,
@@ -34,7 +34,7 @@ export default function ExpedienteSinAsignar() {
   const [filters, setFilters] = useState(defaultFilters);
   const [draftFilters, setDraftFilters] = useState(defaultFilters);
   const { data: qualityBandeja = [], isLoading } = useQuery({
-    queryKey: ["expedientes", "quality-bandeja"],
+    queryKey: queryKeys.expedientes.qualityBandeja,
     queryFn: getQualityBandeja,
   });
   const { data: usuarios = [] } = useUsuariosQuery();
