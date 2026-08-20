@@ -64,7 +64,7 @@ export default function MisAuditoriasTraduccion() {
 
   // Form states
   const [motivo, setMotivo] = useState("");
-  const [observaciones, setObservaciones] = useState("");
+
 
   // React Query: fetch user's quality assignments
   const { data: asignaciones = [], isLoading } = useQuery({
@@ -113,7 +113,6 @@ export default function MisAuditoriasTraduccion() {
   const handleOpenAudit = (doc) => {
     setSelectedDoc(doc);
     setMotivo("");
-    setObservaciones("");
     setRechazoOpen(false);
     setAuditOpen(true);
   };
@@ -122,7 +121,6 @@ export default function MisAuditoriasTraduccion() {
     setAuditOpen(false);
     setSelectedDoc(null);
     setMotivo("");
-    setObservaciones("");
     setRechazoOpen(false);
   };
 

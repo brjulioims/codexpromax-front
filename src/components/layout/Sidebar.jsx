@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import packageJson from "../../../package.json";
 
-const ENABLED_PERMISSIONS_STORAGE_KEY = "enabledPermissionCodes";
 const APP_VERSION = packageJson.version;
 
 const SIDEBAR_ITEMS = [
@@ -112,22 +111,7 @@ const SIDEBAR_ITEMS = [
   },
 ];
 
-function normalizePermissionCode(value) {
-  return `${value ?? ""}`.trim().toLowerCase();
-}
 
-function getStoredEnabledPermissionCodes() {
-  try {
-    const parsed = JSON.parse(
-      localStorage.getItem(ENABLED_PERMISSIONS_STORAGE_KEY) ?? "[]"
-    );
-    return new Set(
-      Array.isArray(parsed) ? parsed.map((item) => normalizePermissionCode(item)) : []
-    );
-  } catch {
-    return new Set();
-  }
-}
 
 function SidebarItem({
   icon: Icon,
@@ -223,19 +207,16 @@ export default function Sidebar({
   onToggle,
 }) {
   const [, setPermissionsVersion] = useState(0);
-  const storedEnabledCodes = getStoredEnabledPermissionCodes();
-
   const [openSection, setOpenSection] = useState(() => {
-  const activeItem = SIDEBAR_ITEMS.find((item) =>
-    item.childrenItems?.some((child) =>
-      child.activeMatch.includes(activePath)
+    const activeItem = SIDEBAR_ITEMS.find((item) =>
+      item.childrenItems?.some((child) =>
+        child.activeMatch.includes(activePath)
       )
     );
 
     return activeItem?.code ?? null;
   });
-  
-  const enabledCodes = storedEnabledCodes;
+
 
   useEffect(() => {
     const handlePermissionsUpdated = () => {
@@ -264,25 +245,9 @@ export default function Sidebar({
   };
 
   const collapsed = !open;
-  const hasAnyEnabledChild = (item) =>
-    (item.childrenItems ?? []).some(
-      (child) => child.code && enabledCodes.has(normalizePermissionCode(child.code))
-    );
 
-  const isChildVisible = (item, child) => {
-    if (!child.code) {
-      return enabledCodes.has(normalizePermissionCode(item.code));
-    }
 
-    if (enabledCodes.has(normalizePermissionCode(item.code))) return true;
-
-    const childCode = normalizePermissionCode(child.code);
-    if (enabledCodes.has(childCode)) return true;
-    
-    return !hasAnyEnabledChild(item);
-  };
-
-  const canShow = (item) => {
+  const canShow = () => {
     return true;
   };
 
