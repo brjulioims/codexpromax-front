@@ -21,8 +21,9 @@ function buildHeaders() {
 
 async function parseResponse(response) {
   if (!response.ok) {
-    if (response.status === 401) {
+    if (response.status === 401 || response.status === 404) {
       clearStoredSession();
+      window.location.replace("/login");
     }
 
     let detail = "";

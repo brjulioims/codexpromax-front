@@ -9,6 +9,7 @@ import {
   Globe,
   PenTool,
   FileCheck2,
+  Activity,
 } from "lucide-react";
 import packageJson from "../../../package.json";
 
@@ -129,9 +130,20 @@ const SIDEBAR_ITEMS = [
       },
     ],
   },
+  {
+    code: "controlyseguimiento",
+    icon: Activity,
+    label: "Control y Seguimiento",
+    childrenItems: [
+      {
+        code: "mis_control_seguimiento",
+        label: "Mis Controles y Seguimientos",
+        activeMatch: ["/mis_control_seguimiento"],
+        route: "/mis_control_seguimiento",
+      },
+    ],
+  }
 ];
-
-
 
 function SidebarItem({
   icon: Icon,
