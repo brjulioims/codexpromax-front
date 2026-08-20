@@ -83,6 +83,8 @@ function normalizeUsuario(usuario) {
     rolNombre,
     status: estatus === 1 ? "Activo" : "Inactivo",
     role: rolNombre,
+    equipoId: usuario?.equipo_id ?? usuario?.equipoId ?? (usuario?.equipo?.id != null ? Number(usuario.equipo.id) : null),
+    equipoNombre: usuario?.equipo_nombre ?? usuario?.equipo?.nombre ?? "",
   };
 }
 

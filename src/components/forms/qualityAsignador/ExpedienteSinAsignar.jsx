@@ -7,6 +7,7 @@ import Swal from "sweetalert2";
 
 import HeaderBox from "../../ui/HeaderBox";
 import ModalFiltro from "../../ui/ModalFiltro";
+import ModalGeneral from "../../ui/ModalGeneral";
 import Table from "../../ui/Table";
 import { invalidateWorkflowQueries, queryKeys, workflowInvalidations } from "../../../utils/queryKeys";
 import {
@@ -24,6 +25,7 @@ export default function ExpedienteSinAsignar() {
   const [assignOpen, setAssignOpen] = useState(false);
   const [selectedExpediente, setSelectedExpediente] = useState(null);
   const [selectedParalegalId, setSelectedParalegalId] = useState("");
+  const [selectedEquipoId, setSelectedEquipoId] = useState("");
   const [observacion, setObservacion] = useState("");
   const defaultFilters = {
     query: "",
@@ -123,15 +125,7 @@ export default function ExpedienteSinAsignar() {
   async function handleSaveAsignacion() {
     const expedienteId = Number(selectedExpediente?.id);
     const paralegalUsuarioId = Number(selectedParalegalId);
-    const equipoId = (() => {
-      const categoria = `${selectedExpediente?.categoria ?? ""}`.toUpperCase();
-      const proceso = `${selectedExpediente?.proceso ?? ""}`.toUpperCase();
-
-      if (categoria.includes("ASILO") || proceso.includes("ASILO")) return 1;
-      if (categoria.includes("USCIS") || proceso.includes("USCIS")) return 2;
-
-      return null;
-    })();
+    const equipoId = Number(selectedEquipoId);
 
     if (!Number.isFinite(expedienteId)) {
       await Swal.fire({
@@ -153,11 +147,11 @@ export default function ExpedienteSinAsignar() {
       return;
     }
 
-    if (!Number.isFinite(Number(equipoId))) {
+    if (!Number.isFinite(equipoId)) {
       await Swal.fire({
         icon: "warning",
-        title: "Equipo no identificado",
-        text: "No se pudo resolver el equipo automaticamente para este expediente.",
+        title: "Selecciona un equipo",
+        text: "Debes elegir un equipo para continuar.",
         confirmButtonColor: "#0e183f",
       });
       return;
@@ -209,6 +203,7 @@ export default function ExpedienteSinAsignar() {
       setAssignOpen(false);
       setSelectedExpediente(null);
       setSelectedParalegalId("");
+      setSelectedEquipoId("");
       setObservacion("");
     } catch (error) {
       await Swal.fire({
@@ -257,6 +252,16 @@ export default function ExpedienteSinAsignar() {
               onClick={() => {
                 setSelectedExpediente(row);
                 setSelectedParalegalId("");
+                // Auto-resolve team based on categoria or proceso
+                const categoria = `${row.categoria ?? ""}`.toUpperCase();
+                const proceso = `${row.proceso ?? ""}`.toUpperCase();
+                if (categoria.includes("ASILO") || proceso.includes("ASILO")) {
+                  setSelectedEquipoId("1");
+                } else if (categoria.includes("USCIS") || proceso.includes("USCIS")) {
+                  setSelectedEquipoId("2");
+                } else {
+                  setSelectedEquipoId("");
+                }
                 setObservacion("");
                 setAssignOpen(true);
               }}
@@ -366,15 +371,17 @@ export default function ExpedienteSinAsignar() {
         </div>
       </ModalFiltro>
 
-      <ModalFiltro
+      <ModalGeneral
         open={assignOpen}
         onClose={() => {
           setAssignOpen(false);
           setSelectedExpediente(null);
           setSelectedParalegalId("");
+          setSelectedEquipoId("");
           setObservacion("");
         }}
         title="ASIGNAR EXPEDIENTE"
+        size="xl"
         footer={
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
             <button
@@ -383,6 +390,7 @@ export default function ExpedienteSinAsignar() {
                 setAssignOpen(false);
                 setSelectedExpediente(null);
                 setSelectedParalegalId("");
+                setSelectedEquipoId("");
                 setObservacion("");
               }}
               className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
@@ -400,76 +408,108 @@ export default function ExpedienteSinAsignar() {
           </div>
         }
       >
-        <div className="grid gap-5">
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="bg-[linear-gradient(135deg,#0e183f_0%,#17305f_55%,#21497d_100%)] px-5 py-4 text-white">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-200">
-                Resumen del expediente
-              </p>
-              <p className="mt-2 text-lg font-bold">
-                {selectedExpediente?.numeroExpediente ?? "-"}
-              </p>
-            </div>
-            <div className="grid gap-3 bg-slate-50 px-5 py-4 text-sm text-slate-700 sm:grid-cols-2">
-              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                  Cliente
+        <div className="grid gap-5 md:grid-cols-2">
+          {/* Columna Izquierda: Resumen del Expediente */}
+          <div className="flex flex-col h-full">
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col h-full">
+              <div className="bg-[linear-gradient(135deg,#0e183f_0%,#17305f_55%,#21497d_100%)] px-5 py-4 text-white">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-200">
+                  Resumen del expediente
                 </p>
-                <p className="mt-1 font-semibold text-slate-800">
-                  {selectedExpediente?.nombre ?? "-"}
+                <p className="mt-2 text-lg font-bold">
+                  {selectedExpediente?.numeroExpediente ?? "-"}
                 </p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                  Oficina
-                </p>
-                <p className="mt-1 font-semibold text-slate-800">
-                  {selectedExpediente?.oficina ?? "-"}
-                </p>
-              </div>
-              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:col-span-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                  Proceso
-                </p>
-                <p className="mt-1 font-semibold text-slate-800">
-                  {selectedExpediente?.proceso ?? "-"}
-                </p>
+              <div className="grid gap-3 bg-slate-50 px-5 py-4 text-sm text-slate-700 flex-1">
+                <div className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    Cliente
+                  </p>
+                  <p className="mt-0.5 font-semibold text-slate-800 truncate">
+                    {selectedExpediente?.nombre ?? "-"}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    Oficina
+                  </p>
+                  <p className="mt-0.5 font-semibold text-slate-800">
+                    {selectedExpediente?.oficina ?? "-"}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    Proceso
+                  </p>
+                  <p className="mt-0.5 font-semibold text-slate-800 text-xs line-clamp-2">
+                    {selectedExpediente?.proceso ?? "-"}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          <label className="block rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-              Paralegal
-            </span>
-            <select
-              value={selectedParalegalId}
-              onChange={(e) => setSelectedParalegalId(e.target.value)}
-              className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none transition focus:border-[#0e183f]"
-            >
-              <option value="">SELECCIONA UN PARALEGAL</option>
-              {paralegalOptions.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.nombre}
-                </option>
-              ))}
-            </select>
-          </label>
+          {/* Columna Derecha: Formulario de Asignación */}
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3.5">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  Paralegal *
+                </span>
+                <select
+                  value={selectedParalegalId}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSelectedParalegalId(val);
+                    if (val) {
+                      const pUser = usuarios.find((u) => String(u.id) === String(val));
+                      if (pUser?.equipoId) {
+                        setSelectedEquipoId(String(pUser.equipoId));
+                      }
+                    }
+                  }}
+                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 outline-none transition focus:border-[#0e183f]"
+                >
+                  <option value="">SELECCIONA</option>
+                  {paralegalOptions.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-          <label className="block rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-              Observacion
-            </span>
-            <textarea
-              value={observacion}
-              onChange={(e) => setObservacion(e.target.value)}
-              rows={4}
-              placeholder="Motivo o comentario de la asignacion"
-              className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[#0e183f]"
-            />
-          </label>
+              <label className="block rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3.5">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  Equipo *
+                </span>
+                <select
+                  value={selectedEquipoId}
+                  onChange={(e) => setSelectedEquipoId(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 outline-none transition focus:border-[#0e183f]"
+                >
+                  <option value="">SELECCIONA</option>
+                  <option value="1">Asilo (Equipo 1)</option>
+                  <option value="2">USCIS (Equipo 2)</option>
+                </select>
+              </label>
+            </div>
+
+            <label className="block rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                Observacion
+              </span>
+              <textarea
+                value={observacion}
+                onChange={(e) => setObservacion(e.target.value)}
+                rows={3}
+                placeholder="Motivo o comentario de la asignacion"
+                className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none transition focus:border-[#0e183f]"
+              />
+            </label>
+          </div>
         </div>
-      </ModalFiltro>
+      </ModalGeneral>
     </section>
   );
 }

@@ -1034,10 +1034,6 @@ export default function DocumentacionExpediente({ expediente = {}, redaccion = n
 
                                    {esDeclaracionPersonalEspanol(item.titulo_requisito) && (
                                      <div className="flex flex-wrap items-center gap-1.5">
-                                       <span className="inline-flex items-center gap-1 border border-[#fe7405]/20 bg-[#fe7405]/10 px-2 py-0.5 rounded-lg text-[9.5px] font-bold uppercase tracking-wide text-[#e06300] dark:border-[#fe7405]/30 dark:bg-[#fe7405]/10">
-                                         <FilePenLine size={10} />
-                                         Requiere Redacción
-                                       </span>
                                        {redaccion && (
                                          (() => {
                                            const formatEstadoRedaccionLabel = (estado) => {
@@ -1111,10 +1107,10 @@ export default function DocumentacionExpediente({ expediente = {}, redaccion = n
                                 <button
                                   type="button"
                                   onClick={onSolicitarRedaccion}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-[#fe7405]/40 bg-[#fe7405] px-2.5 py-1.5 text-[9.5px] font-bold uppercase tracking-wide text-white transition hover:bg-[#e06300] hover:scale-[1.02] active:scale-95 shadow-sm"
+                                  className="inline-flex items-center gap-1 rounded-lg border border-[#fe7405]/40 bg-[#fe7405]/95 px-2.5 py-1.5 text-[9.5px] font-bold uppercase tracking-wide text-white transition hover:bg-[#e06300] disabled:opacity-50 disabled:cursor-not-allowed dark:border-orange-900/40 dark:bg-[#fe7405]"
                                 >
                                   <FilePenLine size={10} />
-                                  Solicitar Redacción
+                                  Enviar a Redacción
                                 </button>
                               )}
 

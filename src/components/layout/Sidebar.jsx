@@ -8,6 +8,7 @@ import {
   UserRoundSearch,
   Globe,
   PenTool,
+  FileCheck2,
 } from "lucide-react";
 import packageJson from "../../../package.json";
 
@@ -106,6 +107,25 @@ const SIDEBAR_ITEMS = [
         label: "Mis Auditorías - Redacción",
         activeMatch: ["/mis_auditorias_redaccion"],
         route: "/mis_auditorias_redaccion",
+      },
+    ],
+  },
+  {
+    code: "revision_ensamble",
+    icon: FileCheck2,
+    label: "Revisión y Ensamble",
+    childrenItems: [
+      {
+        code: "asignaciones_ensamble",
+        label: "Asignaciones - Ensamble",
+        activeMatch: ["/asignaciones-ensamble"],
+        route: "/asignaciones-ensamble",
+      },
+      {
+        code: "mis_ensambles",
+        label: "Mis Ensambles",
+        activeMatch: ["/mis_ensambles"],
+        route: "/mis_ensambles",
       },
     ],
   },

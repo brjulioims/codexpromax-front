@@ -19,6 +19,8 @@ import MisTraducciones from "./components/forms/Traduccion/MisTraducciones";
 import AsignacionesRedaccion from "./components/forms/Redaccion/AsignacionesRedaccion";
 import MisAuditoriasRedaccion from "./components/forms/Redaccion/MisAuditoriasRedaccion";
 import MisRedacciones from "./components/forms/Redaccion/MisRedacciones";
+import AsignacionesEnsamble from "./components/forms/Ensamble/AsignacionesEnsamble";
+import MisEnsambles from "./components/forms/Ensamble/MisEnsambles";
 
 
 import { hasPendingAzureLogin } from "./services/loginAzureService";
@@ -169,6 +171,22 @@ export default function App() {
             element={
               <LayoutShell>
                 <MisRedacciones />
+              </LayoutShell>
+            }
+          />
+          <Route
+            path="/asignaciones-ensamble"
+            element={
+              <LayoutShell>
+                <AsignacionesEnsamble />
+              </LayoutShell>
+            }
+          />
+          <Route
+            path="/mis_ensambles"
+            element={
+              <LayoutShell>
+                <MisEnsambles />
               </LayoutShell>
             }
           />
