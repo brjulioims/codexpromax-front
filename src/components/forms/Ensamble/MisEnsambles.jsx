@@ -17,9 +17,9 @@ import ModalGeneral from "../../ui/ModalGeneral";
 import { 
   getParalegalTablero, 
   getExpedienteChecklist,
-  completarTraduccionDocumento 
-} from "../../../services/paralegalServices";
-import { getExpedienteHistorial } from "../../../services/expedientesServices";
+  completarTraduccionDocumento,
+  getExpedienteHistorial
+} from "../../../services/ensambleServices";
 
 export default function MisEnsambles() {
   const queryClient = useQueryClient();

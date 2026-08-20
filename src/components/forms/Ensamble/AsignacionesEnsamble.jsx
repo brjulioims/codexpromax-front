@@ -16,7 +16,7 @@ import { useUsuariosQuery } from "../../../hooks/queries/useUsuariosQuery";
 import { 
   getExpedientesAsignados,
   reasignarParalegal 
-} from "../../../services/expedientesServices";
+} from "../../../services/ensambleServices";
 
 export default function AsignacionesEnsamble() {
   const queryClient = useQueryClient();

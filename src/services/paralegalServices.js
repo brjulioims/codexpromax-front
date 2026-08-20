@@ -507,37 +507,4 @@ export async function suspenderExpediente(id, payload) {
   }
 }
 
-export async function completarTraduccionDocumento(expedienteId, documentoId, payload) {
-  const expId = validateId(expedienteId, "El ID del expediente");
-  const docId = validateId(documentoId, "El ID del documento");
-  const usuario_id = Number(payload?.usuario_id);
-
-  if (!Number.isFinite(usuario_id)) {
-    throw new Error("usuario_id es obligatorio.");
-  }
-
-  try {
-    const response = await fetch(
-      `/api/expedientes/${expId}/documentos/${docId}/completar-traduccion`,
-      {
-        method: "PATCH",
-        headers: buildHeaders(true),
-        body: JSON.stringify({
-          usuario_id,
-          observaciones: `${payload?.observaciones ?? ""}`.trim() || undefined,
-        }),
-        credentials: "include",
-      }
-    );
-
-    return await parseResponse(
-      response,
-      "completar traducción del documento"
-    );
-  } catch (error) {
-    console.error("Error completando traducción del documento", error);
-    throw error;
-  }
-}
-
 export { PARALEGAL_API_URL };
