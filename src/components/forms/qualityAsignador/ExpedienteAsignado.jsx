@@ -21,11 +21,7 @@ export default function ExpedienteAsignado() {
   const queryClient = useQueryClient();
   const cliente = state?.cliente ?? {};
   const nombre = cliente.nombre || cliente.nombreCliente || "Expedientes Asignados";
-  const rawUser = JSON.parse(localStorage.getItem("user") ?? "{}");
-  const currentUserId = Number(
-    rawUser?.id ?? rawUser?.usuario_id ?? rawUser?.user_id ?? null
-  );
-  const currentUserRoleId = Number(rawUser?.rolId ?? rawUser?.rol_id ?? rawUser?.role_id ?? null);
+
   const [filterOpen, setFilterOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedExpediente, setSelectedExpediente] = useState(null);
@@ -40,18 +36,7 @@ export default function ExpedienteAsignado() {
   const [filters, setFilters] = useState(defaultFilters);
   const [draftFilters, setDraftFilters] = useState(defaultFilters);
   const { data: usuarios = [] } = useUsuariosQuery();
-  const paralegalRoleIds = useMemo(() => {
-    return new Set(
-      usuarios
-        .filter((usuario) => {
-          const rol = `${usuario?.rolNombre ?? usuario?.role ?? ""}`.toLowerCase();
-          return rol.includes("paralegal");
-        })
-        .map((usuario) => Number(usuario?.rolId))
-        .filter(Number.isFinite)
-    );
-  }, [usuarios]);
-  const isParalegalUser = false;
+
   const { data: expedientesAsignados = [], isLoading } = useQuery({
     queryKey: queryKeys.expedientes.asignados,
     queryFn: () => getExpedientesAsignados({}),

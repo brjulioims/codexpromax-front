@@ -1,5 +1,5 @@
 import React from "react";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import {
   Users,
   Gavel,
@@ -55,37 +55,8 @@ function CardShell({ title, subtitle, right, children, className = "" }) {
   );
 }
 
-function getStoredUserProfile() {
-  const storedUser = localStorage.getItem("user");
-  if (!storedUser) return { nombre: "Usuario", role: "" };
-  try {
-    const user = JSON.parse(storedUser);
-    const rawRole = user?.role ?? user?.rol ?? user?.roles;
-    return {
-      nombre: user?.nombre || user?.name || user?.username || `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || user?.email || "Usuario",
-      role: (typeof rawRole === "string" ? rawRole : "") || rawRole?.nombre || rawRole?.name || user?.rolNombre || user?.rol_nombre || "",
-    };
-  } catch {
-    return { nombre: "Usuario", role: "" };
-  }
-}
-
 export default function Dashboard() {
   const { data: me } = useMeQuery();
-  const userProfile = useMemo(() => {
-    const storedProfile = getStoredUserProfile();
-    if (!me) return storedProfile;
-    const rawRole = me.rolNombre || me.role || me.rol || me.roles;
-    const roleName =
-      (typeof rawRole === "string" ? rawRole : "") ||
-      rawRole?.nombre ||
-      rawRole?.name ||
-      storedProfile.role;
-    return {
-      nombre: me.nombre || me.name || me.username || storedProfile.nombre,
-      role: roleName,
-    };
-  }, [me]);
 
   useEffect(() => {
     if (me) {

@@ -19,7 +19,6 @@ import Table from "../../ui/Table";
 import { invalidateWorkflowQueries, workflowInvalidations } from "../../../utils/queryKeys";
 import {
   getMisAsignacionesQuality,
-  aprobarQualityRedaccion,
   rechazarQualityRedaccion,
   enviarTraduccionRedaccion
 } from "../../../services/redaccionServices";

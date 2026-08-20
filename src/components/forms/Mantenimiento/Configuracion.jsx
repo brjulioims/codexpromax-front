@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import HeaderBox from "../../ui/HeaderBox";
-import Filtro from "../../botones/Filtro";
+
 
 
 const tabs = [
@@ -43,9 +43,6 @@ export default function Configuracion() {
       : "";
   });
   const [total, setTotal] = useState(0);
-  const [filterQuery, setFilterQuery] = useState("");
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [openFilterHandler, setOpenFilterHandler] = useState(null);
 
   const currentConfig = useMemo(() => {
     return (
@@ -77,18 +74,9 @@ export default function Configuracion() {
       return next;
     });
     setTotal(0);
-    setFilterQuery("");
-    setFilterOpen(false);
-    setOpenFilterHandler(null);
   };
 
-  const sharedProps = {
-    filterQuery,
-    setFilterQuery,
-    filterOpen,
-    setFilterOpen,
-    onCountChange: setTotal,
-  };
+
 
   return (
     <section className="space-y-5">
@@ -101,16 +89,6 @@ export default function Configuracion() {
             <div className="inline-flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 py-2 text-sm font-semibold text-[#0e183f] dark:text-sky-300 transition-colors duration-300">
               Registrados: {total}
             </div>
-
-            <Filtro
-              onClick={() => {
-                if (openFilterHandler) {
-                  openFilterHandler();
-                  return;
-                }
-                setFilterOpen(true);
-              }}
-            />
           </div>
         }
       />
